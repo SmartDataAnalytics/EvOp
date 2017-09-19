@@ -5,7 +5,7 @@ How to use
 ----------
 
 ```
-git clone https://github.com/HajiraJabeen/EvOp.git
+git clone https://github.com/SmartDataAnalytics/EvOp.git
 cd EvOp
 
 mvn clean package
