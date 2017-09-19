@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 import net.sansa_stack.rdf.spark.io.NTripleReader
 import org.evop.spark.ga.GeneticAlgorithm
 
-object TripleReader {
+object EvolutionaryOptimization {
 
   def main(args: Array[String]) = {
     if (args.length < 2) {
