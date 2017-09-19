@@ -59,8 +59,8 @@ case class PSOParticle(dimension: Int,
     val bestPos = new DenseVector(bestPosition.toArray)
 
     // use breeze DSL to perform the vector ops
-    val newVel = W * vel + (Random.nextDouble() * c1 * (gBestPos - pos))
-    val newPos = vel + pos
+    val newVel = W * vel + (Random.nextDouble() * c1 * (gBestPos - pos)) + (Random.nextDouble() * c2 * (bestPos - pos))
+    val newPos = newVel + pos
 
     // return updated particle
     this.copy(fit = newFit,
