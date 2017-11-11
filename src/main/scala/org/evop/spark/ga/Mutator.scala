@@ -10,11 +10,11 @@ class Mutator extends Serializable  {
 class InterChanger extends Mutator  {
   override def mutate(  theChromo:  Chromosome  )  :  Chromosome  =  {
    var RandomNumber  =  scala.util.Random
-   var r1  =  RandomNumber.nextInt  (  theChromo.Genes.length-1  )
-   var r2  =  RandomNumber.nextInt  (  theChromo.Genes.length-1  )
+   var r1  =  RandomNumber.nextInt  (  theChromo.Genes.length  )
+   var r2  =  RandomNumber.nextInt  (  theChromo.Genes.length  )
    while  (  r1  ==  r2  )  {
-     r1  =  RandomNumber.nextInt  (  theChromo.Genes.length-1  )
-     r2  =  RandomNumber.nextInt  (  theChromo.Genes.length-1  )
+     r1  =  RandomNumber.nextInt  (  theChromo.Genes.length  )
+     r2  =  RandomNumber.nextInt  (  theChromo.Genes.length  )
    }
    //println("For Mutation			"+r1+"					"+r2)
    //theChromo.Genes.foreach(println)
@@ -30,7 +30,10 @@ class InterChanger extends Mutator  {
 
 class Reverser extends Mutator  {
   override def mutate(  theChromo:  Chromosome  )  :  Chromosome  =  {
-   var r1  =  scala.util.Random.nextInt  (  theChromo.Genes.length-2  )
+   var r1  =  theChromo.Genes.length match  {
+     case 2  =>    0
+     case _  =>  scala.util.Random.nextInt  (  theChromo.Genes.length-2  )
+   }
    var r2  =  r1+1
    //println("For Mutation			"+r1+"					"+(r1+1))
    var MutatedGenes: Array[Gene]    =    theChromo.Genes
