@@ -8,11 +8,12 @@ class Stopper(Criteria_Type:String,  Thresh:Long) {
   val t0  =  System.nanoTime()
   var  lastFitness  :  Double  =  0.0
   var staticGens  =  0
+  var timeDiff:Double  =  0.0
   
   def stop(CurrGen  :  Long  ,  currFitness  :  Double  )  :  Boolean  =  {
     // Conditional Check on MAX_GENS
     if  (  Criteria  ==  "MAX_GENS"  )  
-      if(  CurrGen  <  Threshold  )
+      if(  CurrGen  <=  Threshold  )
         return false
     // Conditional Check on ELAPSED_TIME
     if  (  Criteria  ==  "ELAPSED_TIME"  )  
@@ -34,9 +35,16 @@ class Stopper(Criteria_Type:String,  Thresh:Long) {
     // Conditional Check on STALL_TIME
         
     val t1  =  System.nanoTime()
+    timeDiff  = ( (t1-t0).toDouble  /  1000000000  ).toDouble
     println("Total Time Consumed		:		"+  (  (t1-t0).toDouble  /  1000000000  ).toDouble  +"	Seconds")
     return true
       
+  }
+  
+  def forceStop(){
+    val t1  =  System.nanoTime()
+    timeDiff  = ( (t1-t0).toDouble  /  1000000000  ).toDouble
+    println("Total Time Consumed		:		"+  (  (t1-t0).toDouble  /  1000000000  ).toDouble  +"	Seconds")
   }
   
 }
