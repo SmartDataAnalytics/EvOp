@@ -15,6 +15,7 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:Array[Gene]=>Double  ) ex
   val GeneCount:Int=AlleleVals.length
   val Genes: Array[Gene]= AlleleVals
   val fitness  =  f(Genes)
+  TestFunctions.NFC  +=  1
   val fitnessFunc  =  f
      
    
@@ -79,7 +80,7 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:Array[Gene]=>Double  ) ex
   
   
   // Three Parent Crossover
-  def P3X(that:Chromosome,  other:Chromosome  )  :  Chromosome  =  {
+  def P3X(that:Chromosome,  other:Chromosome  )  :  (  Chromosome  ,  Chromosome  )  =  {
     var solution  =  ThreeParent(  this.Genes,  that.Genes,  other.Genes  )
     var Id1  =  (this.ID+that.ID)/2  +  (math floor scala.util.Random.nextDouble()  *100)/10000
     
@@ -87,7 +88,7 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:Array[Gene]=>Double  ) ex
     
     //println(OffSpring.toString())
     
-    OffSpring
+    (  OffSpring  ,  OffSpring  )
   }
   
   
@@ -114,10 +115,3 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:Array[Gene]=>Double  ) ex
   
 
 }
-
-
-
-
-
-
-
