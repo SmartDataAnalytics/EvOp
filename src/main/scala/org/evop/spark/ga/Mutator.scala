@@ -1,4 +1,4 @@
-package pGA
+package org.evop.spark.ga
 
 class Mutator extends Serializable  {
   def mutate(  theChromo:  Chromosome  )  :  Chromosome  =    {

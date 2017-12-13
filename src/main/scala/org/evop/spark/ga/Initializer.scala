@@ -1,7 +1,7 @@
-package pGA
+package org.evop.spark.ga
 
 import scala.io.Source
-import pGA._
+
 //import scala.collection.parallel.ParIterableLike.Foreach
 
 
@@ -89,7 +89,22 @@ class RandomDoubleInitializer(  P  :  Int  , CL:  Int  , valBound:  Array[Int]  
                     }
   }
 }
-
+/*
+class RandomInitializer(P:Int, CL:Int, minval:Int=0, maxval:Int=1000, f:Array[Gene]=>Double) extends Initializer {
+  Populaion = P
+  InitType=1
+ 
+  val r = scala.util.Random
+    println("I am in  "+r)
+  for(i <-  Populaion to 1 by -1)  {
+      val temp  =  List.fill(CL)( minval + r.nextInt( maxval-minval ) )  // Initialize the chromosomes with random values within specified range
+      val randomAlleles  =  temp.map(  x => new Gene(x)  ).toArray
+      val newchromo  =  new Chromosome(i, randomAlleles,  f  )  // Create a chromosome from Randomly created Alleles
+      chromoList = (i.asInstanceOf[Double], newchromo) :: chromoList
+      println(newchromo)
+  }
+}*/
+//class RandomInitializer(P:Int, CL:Int, valBounds:Array[Int], f:Array[Gene]=>Double) extends Initializer 
   
 
 class FileInitializer(P:Int, CL:Int, fname:String) extends Initializer {

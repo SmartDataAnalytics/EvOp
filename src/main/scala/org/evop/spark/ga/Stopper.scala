@@ -1,4 +1,4 @@
-package pGA
+package org.evop.spark.ga
 
 class Stopper(Criteria_Type:String,  Thresh:Long) {
   

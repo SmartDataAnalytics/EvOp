@@ -1,20 +1,25 @@
-package pGA
+package org.evop.spark.ga
 
+import org.apache.spark._
+import org.apache.spark.rdd.RDD
+import org.apache.spark.streaming._
+import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.sql.catalyst.expressions.Sqrt
 import org.apache.commons.math3.analysis.function.Sqrt
 import breeze.linalg.split
 import java.io.File
 import java.io.PrintWriter
 import scala.io.Source
+import scala.tools.cmd.Spec.Accumulator
 
 case object TestFunctions {
   
   //value Bounds of Optimization Functions
-  val AckleyBound  :  Array[Double]  =  Array  (  -32.768  ,  32.768  )
+  val AckleyBound  :  Array[Int]  =  Array  (  -33  ,  33  )
   val SphereBound  :  Array[Int]  =  Array  (  -6  ,  6  )
   val SumOfDiffPowersBound  :  Array[Int]  =  Array  (  -1  ,  1  )
   val GriewankBound  :  Array[Int]  =  Array  (  -600  ,  600  )
-  var NFC = 0
+  var NFC  = 0
   
   //Simple Test Function
   def FitnessFunc  (  Alleles:Array[Gene]  )  :  Double =  {

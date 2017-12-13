@@ -1,6 +1,5 @@
-package pGA
+package org.evop.spark.ga
 
-import pGA._
 //import scala.collection.parallel.ParIterableLike.Foreach
 
 /*
@@ -8,6 +7,7 @@ import pGA._
  * Member Variables: GeneCount, Genes
  * Member Functions: X,+ 
  */
+
 class Chromosome( Id:Double, AlleleVals:Array[Gene], f:Array[Gene]=>Double  ) extends Serializable  {
   def this(AlleleVals:Array[Gene])  =  this( 0, AlleleVals,  AlleleVals =>0 )
   def this( Id:Double, AlleleVals:Array[Gene])  =  this( Id, AlleleVals,  AlleleVals =>0 )
@@ -15,7 +15,7 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:Array[Gene]=>Double  ) ex
   val GeneCount:Int=AlleleVals.length
   val Genes: Array[Gene]= AlleleVals
   val fitness  =  f(Genes)
-  TestFunctions.NFC  +=  1
+  //TestFunctions.NFC  +=  1
   val fitnessFunc  =  f
      
    
@@ -115,3 +115,10 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:Array[Gene]=>Double  ) ex
   
 
 }
+
+
+
+
+
+
+

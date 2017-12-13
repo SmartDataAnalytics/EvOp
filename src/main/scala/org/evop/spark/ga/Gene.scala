@@ -1,4 +1,4 @@
-package pGA
+package org.evop.spark.ga
 
 class Gene(geneVal: Double) extends Serializable   {
   

@@ -1,9 +1,8 @@
-package pGA
+package org.evop.spark.ga
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
-import pGA._
 import scala.collection.parallel._
 import org.apache.xpath.FoundIndex
 import org.apache.spark.streaming._
@@ -35,7 +34,7 @@ abstract class Selector  extends Serializable{
       var p  =  Partitioned.take(1)
       p(0)._2
    }
-   def eliminateWeak  (  Partitioned: RDD[  (Double, Chromosome)  ]  ): RDD[  (Double, Chromosome)]  =  {
+   def eliminateWeak  (  Partitioned: RDD[  (Double, Chromosome)  ]    ,  PartitionsCount:Int  ): RDD[  (Double, Chromosome)]  =  {
      Partitioned
    }
     
@@ -44,7 +43,8 @@ abstract class Selector  extends Serializable{
 
 //crossProbability:Double  ,  
 class RandomSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceScheme:String,  
-    crossType:String,  Direct:String  ,  CrossOverProb:Double  ,  MutationProb:Double  ) extends Selector   {
+    crossType:String,  Direct:String  ,  CrossOverProb:Double  ,  MutationProb:Double  ,
+    bdCastStrategy:String  ,  bdCastSize:Int) extends Selector   {
   
 
   //val ReplacementScheme  =  ReplaceScheme
@@ -194,7 +194,7 @@ class RandomSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceScheme:
   }
    
   
-  override def eliminateWeak  (  Partitioned: RDD[  (Double, Chromosome)  ]  ): RDD[  (Double, Chromosome)]  =  {
+  override def eliminateWeak  (  Partitioned: RDD[  (Double, Chromosome)  ]  ,  PartitionsCount:Int): RDD[  (Double, Chromosome)]  =  {
     val Direction  =  Direct
     
     var RecievedBroadCast  =  bestSolutions.value
@@ -244,7 +244,8 @@ class RandomSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceScheme:
 
  
 class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceScheme:String,  
-    crossType:String,  Direct:String  ,  CrossOverProb:Double  ,  MutationProb:Double  ) extends Selector   {
+    crossType:String,  Direct:String  ,  CrossOverProb:Double  ,  MutationProb:Double  ,
+    bdCastStrategy:String  ,  bdCastSize:Int) extends Selector   {
   
 
   //val ReplacementScheme  =  ReplaceScheme
@@ -411,63 +412,130 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
   override def selectBest  (  Partitioned: RDD[  (Double, Chromosome)  ]    )  :  Chromosome  =  {
     val Direction  =  Direct
     //println("Ready to Broadcast")
+    var k:Int  =  bdCastSize
      val mapped  =  Partitioned.mapPartitionsWithIndex{
       (index, Iterator)  => {
         
         var myArray  =  Iterator.toArray
-        var thyArray  =  myArray.map(x=>x._2.fitness)
-        var foundindex= Direction match  {
-          case  "MAX"  =>  thyArray.indexOf(thyArray.max)
-          case  "MIN"  =>  thyArray.indexOf(thyArray.min)
-        }
-        myArray(foundindex)  =  (index,  myArray(foundindex)._2)
-        var LocalOptima:Array[(Double, Chromosome)]  =  Array(myArray(foundindex))
-        LocalOptima.iterator
+        
+       if (  Direction  ==  "MAX")
+         myArray  =  myArray.sortWith(_._2.fitness  >  _._2.fitness  )
+       if (  Direction  ==  "MIN")
+         myArray  =  myArray.sortWith(_._2.fitness  <  _._2.fitness  )
+       var neArray  =  myArray.take(k).toList
+       neArray  =  neArray.map  (  x  =>  (  index.toDouble  ,  x._2  )  )
+       neArray.iterator
       }
     } 
-   //println("Array collected successfully")
    var SelectedBests  =  mapped.collect()
-   //var temp1  =  sc.parallelize(temp)
    bestSolutions.update(  SelectedBests    )
-   //println("DIRECTION IS                                                      "+Direction)
-   if (  Direction  ==  "MAX"  )
-     SelectedBests  =  SelectedBests.sortWith(  _._2.fitness  >  _._2.fitness  )
-   else
-     SelectedBests  =  SelectedBests.sortWith(  _._2.fitness  <  _._2.fitness  )
-   var BestOfBest    =    SelectedBests(0)
-   BestOfBest._2
+   SelectedBests(0)._2
   }
    
   
-  override def eliminateWeak  (  Partitioned: RDD[  (Double, Chromosome)  ]  ): RDD[  (Double, Chromosome)]  =  {
+  override def eliminateWeak  (  Partitioned: RDD[  (Double, Chromosome)  ]  ,  PartitionsCount:Int): RDD[  (Double, Chromosome)]  =  {
     val Direction  =  Direct
-    
-    var RecievedBroadCast  =  bestSolutions.value
-  
+    val bdStrategy  =  bdCastStrategy
+    val k  =  bdCastSize
+    var recBD  =  bestSolutions.value
+    val ptCount  =  PartitionsCount
     val mapped  =  Partitioned.mapPartitionsWithIndex  {
       (index, theIterator)  => {
         var myArray  =  theIterator.toArray
         var thyArray  =  myArray.map(x=>x._2.fitness)
-        //println(" >>>>>>>>>>>>>>>>>>>>>>> ")
-        //RecievedBroadCast.map(x=>x._2).foreach(println)
-        //println(" >>>>>>>>>>>>>>>>>>>>>>> ")
         
-        
-        RecievedBroadCast  =  RecievedBroadCast.filter(_._1  ==  (  (index+1)  %  5  )  )
-        var required  =  RecievedBroadCast.take(1)
-        //println("Current Index is "+index+" Recieved index is "+required(0)._1+"  and solusion is  "+required(0)._2)
-        
-        var foundindex= Direction match  {
-          case  "MAX"  =>  thyArray.indexOf(thyArray.min)
-          case  "MIN"  =>  thyArray.indexOf(thyArray.max)
+        var tmp1:Array[(Double,Chromosome)]  =  Array()
+        Direction match  {
+          case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
+          case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
         }
         
-        myArray  (  foundindex  )  =  (  required(0)._2.ID  ,  required(0)._2  )
+        bdStrategy match  {
+          case  "B2B"  =>  {  println("B2B")
+              Direction match  {
+                case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
+                case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
+              }
+              val tmp2  =  myArray.splitAt(k)
+              var tmp1  =  recBD.filter(  _._1  ==  (  index+1  )  %  ptCount  )
+              myArray  =  tmp1  ++  tmp2._2
+              println("tmp1 length is "+tmp1.length+" tmp2 length is "+tmp2._2.length)
+          }
+          case  "B2W"  =>  {  println("B2W")
+              Direction match  {
+                case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
+                case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
+              }
+              val tmp2  =  myArray.splitAt(k)
+              val tmp1  =  recBD.filter(  _._1  ==  (  index+1  )  %  ptCount  )
+              myArray  =  tmp1  ++  tmp2._2
+            
+          }
+          case  "H2W"  =>  {  println("H2W")
+              for  (  i  <-  0  to  recBD.length-1  )  {
+                for  (  j  <-  i+1  to  recBD.length-1  )  {
+                  var offSprings  =  recBD(i)._2.UX(recBD(i)._2)
+                  recBD  =  recBD  :+  (offSprings._1.ID,offSprings._1)  :+  (offSprings._2.ID,offSprings._2)                  
+                }
+              }
+              Direction match  {
+                case  "MAX"  =>  {  recBD  =  recBD.sortWith(  _._2.fitness  >  _._2.fitness  )
+                  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
+                }
+                case  "MIN"  =>  {  recBD  =  recBD.sortWith(  _._2.fitness  <  _._2.fitness  )
+                  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
+                }
+              }
+              val tmp2  =  myArray.splitAt(k)
+              val tmp1  =  recBD.take(k)
+              myArray  =  tmp1  ++  tmp2._2
+          }
+          case  "H2B"  =>  {  println("H2B")
+              for  (  i  <-  0  to  recBD.length-1  )  {
+                for  (  j  <-  i+1  to  recBD.length-1  )  {
+                  var offSprings  =  recBD(i)._2.UX(recBD(i)._2)
+                  recBD  =  recBD  :+  (offSprings._1.ID,offSprings._1)  :+  (offSprings._2.ID,offSprings._2)                  
+                }
+              }
+              Direction match  {
+                case  "MAX"  =>  {  recBD  =  recBD.sortWith(  _._2.fitness  >  _._2.fitness  )
+                  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
+                }
+                case  "MIN"  =>  {  recBD  =  recBD.sortWith(  _._2.fitness  <  _._2.fitness  )
+                  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
+                }
+              }
+              val tmp2  =  myArray.splitAt(k)
+              val tmp1  =  recBD.take(k)
+              myArray  =  tmp1  ++  tmp2._2
+          }
+          case  "BB2W"  =>  {  println("BB2W")
+            Direction match  {
+                case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
+                case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
+              }
+            val tmp2  =  myArray.splitAt(k)
+            val tmp1  =  recBD.take(k)
+            myArray  =  tmp1  ++  tmp2._2
+          }
+          case  "BB2B"  =>  {  println("BB2B")
+            Direction match  {
+                case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
+                case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
+              }
+            val tmp2  =  myArray.splitAt(k)
+            val tmp1  =  recBD.take(k)
+            myArray  =  tmp1  ++  tmp2._2
+          }
+          
+        }
+               
+        println("index "+index+" Array length is ="+myArray.length)
         
+                
         myArray.iterator
       }
     }
    mapped
   }
 }
-   
