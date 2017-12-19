@@ -428,6 +428,8 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
       }
     } 
    var SelectedBests  =  mapped.collect()
+   println("BEST SOLUTIONS")
+   SelectedBests.foreach(println)
    bestSolutions.update(  SelectedBests    )
    SelectedBests(0)._2
   }
@@ -451,7 +453,7 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
         }
         
         bdStrategy match  {
-          case  "B2B"  =>  {  println("B2B")
+          case  "B2B"  =>  {  
               Direction match  {
                 case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
                 case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
@@ -461,7 +463,7 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
               myArray  =  tmp1  ++  tmp2._2
               println("tmp1 length is "+tmp1.length+" tmp2 length is "+tmp2._2.length)
           }
-          case  "B2W"  =>  {  println("B2W")
+          case  "B2W"  =>  {  
               Direction match  {
                 case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
                 case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
@@ -471,7 +473,7 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
               myArray  =  tmp1  ++  tmp2._2
             
           }
-          case  "H2W"  =>  {  println("H2W")
+          case  "H2W"  =>  {  
               for  (  i  <-  0  to  recBD.length-1  )  {
                 for  (  j  <-  i+1  to  recBD.length-1  )  {
                   var offSprings  =  recBD(i)._2.UX(recBD(i)._2)
@@ -490,7 +492,7 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
               val tmp1  =  recBD.take(k)
               myArray  =  tmp1  ++  tmp2._2
           }
-          case  "H2B"  =>  {  println("H2B")
+          case  "H2B"  =>  {  
               for  (  i  <-  0  to  recBD.length-1  )  {
                 for  (  j  <-  i+1  to  recBD.length-1  )  {
                   var offSprings  =  recBD(i)._2.UX(recBD(i)._2)
@@ -509,7 +511,7 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
               val tmp1  =  recBD.take(k)
               myArray  =  tmp1  ++  tmp2._2
           }
-          case  "BB2W"  =>  {  println("BB2W")
+          case  "BB2W"  =>  {  
             Direction match  {
                 case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
                 case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
@@ -518,7 +520,7 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
             val tmp1  =  recBD.take(k)
             myArray  =  tmp1  ++  tmp2._2
           }
-          case  "BB2B"  =>  {  println("BB2B")
+          case  "BB2B"  =>  {  
             Direction match  {
                 case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
                 case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
@@ -530,7 +532,7 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
           
         }
                
-        println("index "+index+" Array length is ="+myArray.length)
+        //println("index "+index+" Array length is ="+myArray.length)
         
                 
         myArray.iterator
