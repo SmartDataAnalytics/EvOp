@@ -17,6 +17,7 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:Array[Gene]=>Double  ) ex
   val fitness  =  f(Genes)
   //TestFunctions.NFC  +=  1
   val fitnessFunc  =  f
+  var lastBCast  =  0
      
    
   //  Single Point Crossover: +

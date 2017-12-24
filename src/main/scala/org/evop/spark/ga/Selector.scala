@@ -30,9 +30,9 @@ abstract class Selector  extends Serializable{
   def selection(rdd: RDD[  (Double, Chromosome) ],  genGap:Int=1): RDD[  (Double, Chromosome)]  =   {
       rdd
   }
-  def selectBest  (  Partitioned: RDD[  (Double, Chromosome)  ]  )    :  Chromosome  =  {
+  def selectBest  (  Partitioned: RDD[  (Double, Chromosome)  ]  )    :  (Double, Chromosome)  =  {
       var p  =  Partitioned.take(1)
-      p(0)._2
+      p(0)
    }
    def eliminateWeak  (  Partitioned: RDD[  (Double, Chromosome)  ]    ,  PartitionsCount:Int  ): RDD[  (Double, Chromosome)]  =  {
      Partitioned
@@ -163,7 +163,7 @@ class RandomSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceScheme:
   }
   
   
-  override def selectBest  (  Partitioned: RDD[  (Double, Chromosome)  ]    )  :  Chromosome  =  {
+  override def selectBest  (  Partitioned: RDD[  (Double, Chromosome)  ]    )  :  (Double, Chromosome)  =  {
     val Direction  =  Direct
     //println("Ready to Broadcast")
      val mapped  =  Partitioned.mapPartitionsWithIndex{
@@ -190,7 +190,7 @@ class RandomSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceScheme:
    else
      SelectedBests  =  SelectedBests.sortWith(  _._2.fitness  <  _._2.fitness  )
    var BestOfBest    =    SelectedBests(0)
-   BestOfBest._2
+   BestOfBest
   }
    
   
@@ -261,22 +261,31 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
   
   override def selection(  Partitioned: RDD[  (Double, Chromosome)  ],  genGap:Int  =  1  
         ) : RDD[  (Double, Chromosome)] =  {
-    
+    val Direction  =  Direct
+    val bdStrategy  =  bdCastStrategy
+    val k  =  bdCastSize
     val ReplacementScheme  =  ReplaceScheme  
     val theMutator  =  MutatorType match  {
       case  "INTERCHANGE"  =>  new InterChanger
       case  "REVERSE"      =>  new Reverser
     }
-    val Direction  =  Direct
+    
     val  CrossOverProbability  =  CrossOverProb
     val  MutationProbability  =  MutationProb
     
     val mapped  =  Partitioned.mapPartitionsWithIndex{
+
       (index, Iterator)  => {
             
         var myArray  =  Iterator.toArray
         var RandomNumber  =  scala.util.Random
         
+        for  (  i  <-  0 to myArray.length-1)  {
+            if  (  myArray(  i  )._2.lastBCast  ==  2  )
+              myArray(  i  )._2.lastBCast  =  1
+            if  (  myArray(  i  )._2.lastBCast  ==  3  )
+              myArray(  i  )._2.lastBCast  =  0
+          }
         
         def BothParent(  P1:Chromosome,  P2:Chromosome,  O1:Chromosome,  O2:Chromosome)  =  {
             (O1,O2)
@@ -401,37 +410,92 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
             }
             
         }
-        //////////
+        ////////// Task relevant to Broadcast ///////////
+        Direction match  {
+          case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
+          case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
+        }
+        var filtered  =  myArray.take(k)
+        var myArrayZip  =  myArray.zipWithIndex
+        bdStrategy match  {
+          case  "B2B"  =>  { 
+            myArrayZip  =  myArrayZip.filter(  _._1._2.lastBCast  ==  0  )
+            myArrayZip  =  myArrayZip.take(k)
+            var toBDC  =  myArrayZip.collect  {  case (  x  ,  i  ) => (  index.toDouble  , x._2  )  }
+            for  (  i  <-  0 to k-1)
+              myArray(  myArrayZip(i)._2  )._2.lastBCast  =  2
+          }
+          case  "B2W"  =>  { 
+            myArrayZip  =  myArrayZip.filter(  _._1._2.lastBCast  ==  0  )
+            myArrayZip  =  myArrayZip.take(k)
+            var toBDC  =  myArrayZip.collect  {  case (  x  ,  i  ) => (  index.toDouble  , x._2  )  }
+            for  (  i  <-  0 to k-1)
+              myArray(  myArrayZip(i)._2  )._2.lastBCast  =  2
+          }
+          case  "BB2W"  =>  { 
+            myArrayZip  =  myArrayZip.filter(  _._1._2.lastBCast  ==  0  )
+            myArrayZip  =  myArrayZip.take(k)
+            var toBDC  =  myArrayZip.collect  {  case (  x  ,  i  ) => (  index.toDouble  , x._2  )  }
+            for  (  i  <-  0 to k-1)
+              myArray(  myArrayZip(i)._2  )._2.lastBCast  =  2
+          }
+          case  "BB2B"  =>  { 
+            myArrayZip  =  myArrayZip.filter(  _._1._2.lastBCast  ==  0  )
+            myArrayZip  =  myArrayZip.take(k)
+            var toBDC  =  myArrayZip.collect  {  case (  x  ,  i  ) => (  index.toDouble  , x._2  )  }
+            for  (  i  <-  0 to k-1)
+              myArray(  myArrayZip(i)._2  )._2.lastBCast  =  2
+          }
+        }
+        ////////////
         myArray.iterator
       }
     }
-   mapped 
+   mapped
   }
   
   
-  override def selectBest  (  Partitioned: RDD[  (Double, Chromosome)  ]    )  :  Chromosome  =  {
+  override def selectBest  (  Partitioned: RDD[  (Double, Chromosome)  ]    )  :  (Double, Chromosome)  =  {
     val Direction  =  Direct
+    val bdStrategy  =  bdCastStrategy
     //println("Ready to Broadcast")
     var k:Int  =  bdCastSize
      val mapped  =  Partitioned.mapPartitionsWithIndex{
       (index, Iterator)  => {
-        
-        var myArray  =  Iterator.toArray
-        
-       if (  Direction  ==  "MAX")
-         myArray  =  myArray.sortWith(_._2.fitness  >  _._2.fitness  )
-       if (  Direction  ==  "MIN")
-         myArray  =  myArray.sortWith(_._2.fitness  <  _._2.fitness  )
-       var neArray  =  myArray.take(k).toList
-       neArray  =  neArray.map  (  x  =>  (  index.toDouble  ,  x._2  )  )
-       neArray.iterator
+         var myArray  =  Iterator.toArray
+         Direction match  {
+            case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
+            case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
+         }
+         bdStrategy match  {
+            case  "B2B"  =>  {
+              myArray  =  myArray.filter(_._2.lastBCast==2)
+            }
+            case  "B2W"  =>  {
+              myArray  =  myArray.filter(_._2.lastBCast==2)
+            }
+            case  "BB2W" =>  {
+              myArray  =  myArray.filter(_._2.lastBCast==2)
+            }
+            case  "BB2B" =>  {
+              myArray  =  myArray.filter(_._2.lastBCast==2)
+            }
+         }
+         myArray.iterator
       }
     } 
    var SelectedBests  =  mapped.collect()
    println("BEST SOLUTIONS")
+   Direction match  {
+     case  "MAX"  =>  SelectedBests  =  SelectedBests.sortWith(  _._2.fitness  >  _._2.fitness  )
+     case  "MIN"  =>  SelectedBests  =  SelectedBests.sortWith(  _._2.fitness  <  _._2.fitness  )
+   }
+   
+  
    SelectedBests.foreach(println)
    bestSolutions.update(  SelectedBests    )
-   SelectedBests(0)._2
+   
+   SelectedBests(0)
   }
    
   
@@ -477,7 +541,7 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
               for  (  i  <-  0  to  recBD.length-1  )  {
                 for  (  j  <-  i+1  to  recBD.length-1  )  {
                   var offSprings  =  recBD(i)._2.UX(recBD(i)._2)
-                  recBD  =  recBD  :+  (offSprings._1.ID,offSprings._1)  :+  (offSprings._2.ID,offSprings._2)                  
+                  recBD  =  recBD  :+  (  1000.0  ,  offSprings._1  )  :+  (  1000.0  ,  offSprings._2  )                  
                 }
               }
               Direction match  {
@@ -489,14 +553,15 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
                 }
               }
               val tmp2  =  myArray.splitAt(k)
-              val tmp1  =  recBD.take(k)
+              var tmp1  =  recBD.filter(  _._1  !=  index  )
+              tmp1  =  recBD.take(k)
               myArray  =  tmp1  ++  tmp2._2
           }
           case  "H2B"  =>  {  
               for  (  i  <-  0  to  recBD.length-1  )  {
                 for  (  j  <-  i+1  to  recBD.length-1  )  {
                   var offSprings  =  recBD(i)._2.UX(recBD(i)._2)
-                  recBD  =  recBD  :+  (offSprings._1.ID,offSprings._1)  :+  (offSprings._2.ID,offSprings._2)                  
+                  recBD  =  recBD  :+  (  1000.0  ,  offSprings._1  )  :+  (  1000.0  ,  offSprings._2  )                  
                 }
               }
               Direction match  {
@@ -508,7 +573,8 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
                 }
               }
               val tmp2  =  myArray.splitAt(k)
-              val tmp1  =  recBD.take(k)
+              var tmp1  =  recBD.filter(  _._1  !=  index  )
+              tmp1  =  recBD.take(k)
               myArray  =  tmp1  ++  tmp2._2
           }
           case  "BB2W"  =>  {  
@@ -517,7 +583,8 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
                 case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
               }
             val tmp2  =  myArray.splitAt(k)
-            val tmp1  =  recBD.take(k)
+            var tmp1  =  recBD.filter(  _._1  !=  index  )
+            tmp1  =  recBD.take(k)
             myArray  =  tmp1  ++  tmp2._2
           }
           case  "BB2B"  =>  {  
@@ -526,7 +593,8 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
                 case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
               }
             val tmp2  =  myArray.splitAt(k)
-            val tmp1  =  recBD.take(k)
+            var tmp1  =  recBD.filter(  _._1  !=  index  )
+            tmp1  =  recBD.take(k)
             myArray  =  tmp1  ++  tmp2._2
           }
           

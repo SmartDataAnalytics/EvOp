@@ -76,7 +76,7 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
   var nextPartitions  =  Partitioned
     
   //println("Starting While")
-  var BestofBest  =  new Chromosome(0.0,Array(new Gene(0)))
+  var BestofBest  =  (0.0  ,  new Chromosome(0.0,Array(new Gene(0))))
   val  theStopper:Stopper  =  new Stopper(stopper_Type,Stopper_Threshold)
   breakable{
   while(  !(  theStopper.stop(gens,0)  )  &&  condition  ==  true  )  {
@@ -93,8 +93,8 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
       nextPartitions   =  theSelector.selection(nextPartitions)
       BestofBest  =  theSelector.selectBest(nextPartitions)
       println("The Best Solution After Generation "+gens+" is "+BestofBest )
-      optRecord  =  (  gens  ,  TestFunctions.NFC  ,  BestofBest.fitness  )  ::  optRecord
-      if (BestofBest.fitness<=0){
+      optRecord  =  (  gens  ,  TestFunctions.NFC  ,  BestofBest._2.fitness  )  ::  optRecord
+      if (BestofBest._2.fitness<=0){
         theStopper.forceStop()
         gens  -=  1
         condition  =  false
