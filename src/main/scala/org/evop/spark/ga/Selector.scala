@@ -422,29 +422,49 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
             myArrayZip  =  myArrayZip.filter(  _._1._2.lastBCast  ==  0  )
             myArrayZip  =  myArrayZip.take(k)
             var toBDC  =  myArrayZip.collect  {  case (  x  ,  i  ) => (  index.toDouble  , x._2  )  }
-            for  (  i  <-  0 to k-1)
+            for  (  i  <-  0 to k-1) {
+              //println  (  "Length of myArrayat index "+index+" =   "  +  myArrayZip.length  )
+              //println(  "Selected for BCast   "+" index   "+index+"      "  +  myArrayZip(i)._2  )
+              myArray(  myArrayZip(i)._2  )  =  (  index.toDouble  ,  myArray(  myArrayZip(i)._2  )._2  )
               myArray(  myArrayZip(i)._2  )._2.lastBCast  =  2
+
+            }
           }
           case  "B2W"  =>  { 
             myArrayZip  =  myArrayZip.filter(  _._1._2.lastBCast  ==  0  )
             myArrayZip  =  myArrayZip.take(k)
             var toBDC  =  myArrayZip.collect  {  case (  x  ,  i  ) => (  index.toDouble  , x._2  )  }
-            for  (  i  <-  0 to k-1)
+            for  (  i  <-  0 to k-1) {
+              //println  (  "Length of myArrayat index "+index+" =   "  +  myArrayZip.length  )
+              //println(  "Selected for BCast   "+" index   "+index+"      "  +  myArrayZip(i)._2  )
+              myArray(  myArrayZip(i)._2  )  =  (  index.toDouble  ,  myArray(  myArrayZip(i)._2  )._2  )
               myArray(  myArrayZip(i)._2  )._2.lastBCast  =  2
+
+            }
           }
           case  "BB2W"  =>  { 
             myArrayZip  =  myArrayZip.filter(  _._1._2.lastBCast  ==  0  )
             myArrayZip  =  myArrayZip.take(k)
             var toBDC  =  myArrayZip.collect  {  case (  x  ,  i  ) => (  index.toDouble  , x._2  )  }
-            for  (  i  <-  0 to k-1)
+            for  (  i  <-  0 to k-1) {
+              //println  (  "Length of myArrayat index "+index+" =   "  +  myArrayZip.length  )
+              //println(  "Selected for BCast   "+" index   "+index+"      "  +  myArrayZip(i)._2  )
+              myArray(  myArrayZip(i)._2  )  =  (  index.toDouble  ,  myArray(  myArrayZip(i)._2  )._2  )
               myArray(  myArrayZip(i)._2  )._2.lastBCast  =  2
+
+            }
           }
           case  "BB2B"  =>  { 
             myArrayZip  =  myArrayZip.filter(  _._1._2.lastBCast  ==  0  )
             myArrayZip  =  myArrayZip.take(k)
             var toBDC  =  myArrayZip.collect  {  case (  x  ,  i  ) => (  index.toDouble  , x._2  )  }
-            for  (  i  <-  0 to k-1)
+            for  (  i  <-  0 to k-1) {
+              //println  (  "Length of myArrayat index "+index+" =   "  +  myArrayZip.length  )
+              //println(  "Selected for BCast   "+" index   "+index+"      "  +  myArrayZip(i)._2  )
+              myArray(  myArrayZip(i)._2  )  =  (  index.toDouble  ,  myArray(  myArrayZip(i)._2  )._2  )
               myArray(  myArrayZip(i)._2  )._2.lastBCast  =  2
+
+            }
           }
         }
         ////////////
