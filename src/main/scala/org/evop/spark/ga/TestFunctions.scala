@@ -19,7 +19,19 @@ case object TestFunctions {
   val SphereBound  :  Array[Int]  =  Array  (  -6  ,  6  )
   val SumOfDiffPowersBound  :  Array[Int]  =  Array  (  -1  ,  1  )
   val GriewankBound  :  Array[Int]  =  Array  (  -600  ,  600  )
-  var NFC  = 0
+  val conf = new SparkConf().setAppName("Parallel GA").setMaster("spark://172.18.160.16:3077") 
+    .setMaster("local[*]")
+// local mode
+//  .setMaster("local[*]")
+//  .set("spark.executor.memory","7g")
+//  .set("spark.driver.memory","3g")
+//  .set("spark.driver.maxResultSize","0")
+    
+  //Create Spark Context
+  val sc = new SparkContext(conf)
+  
+  var NFC = sc.longAccumulator("Number of Function Calls")
+  //var NFC  = 0
   
   //Simple Test Function
   def FitnessFunc  (  Alleles:Array[Gene]  )  :  Double =  {

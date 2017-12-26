@@ -11,12 +11,13 @@ package org.evop.spark.ga
 class Chromosome( Id:Double, AlleleVals:Array[Gene], f:Array[Gene]=>Double  ) extends Serializable  {
   def this(AlleleVals:Array[Gene])  =  this( 0, AlleleVals,  AlleleVals =>0 )
   def this( Id:Double, AlleleVals:Array[Gene])  =  this( Id, AlleleVals,  AlleleVals =>0 )
-  val ID:Double = Id
+  var ID:Double = Id
   val GeneCount:Int=AlleleVals.length
   val Genes: Array[Gene]= AlleleVals
   val fitness  =  f(Genes)
-  //TestFunctions.NFC  +=  1
+  TestFunctions.NFC.add(1)
   val fitnessFunc  =  f
+  var lastBCast  =  0
      
    
   //  Single Point Crossover: +
