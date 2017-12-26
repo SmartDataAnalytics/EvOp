@@ -15,7 +15,7 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:Array[Gene]=>Double  ) ex
   val GeneCount:Int=AlleleVals.length
   val Genes: Array[Gene]= AlleleVals
   val fitness  =  f(Genes)
-  //TestFunctions.NFC  +=  1
+  TestFunctions.NFC.add(1)
   val fitnessFunc  =  f
   var lastBCast  =  0
      

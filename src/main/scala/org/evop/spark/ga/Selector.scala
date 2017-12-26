@@ -466,6 +466,29 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
 
             }
           }
+          case  "H2W"  =>  { 
+            myArrayZip  =  myArrayZip.filter(  _._1._2.lastBCast  ==  0  )
+            myArrayZip  =  myArrayZip.take(k)
+            var toBDC  =  myArrayZip.collect  {  case (  x  ,  i  ) => (  index.toDouble  , x._2  )  }
+            for  (  i  <-  0 to k-1) {
+              //println  (  "Length of myArrayat index "+index+" =   "  +  myArrayZip.length  )
+              //println(  "Selected for BCast   "+" index   "+index+"      "  +  myArrayZip(i)._2  )
+              myArray(  myArrayZip(i)._2  )  =  (  index.toDouble  ,  myArray(  myArrayZip(i)._2  )._2  )
+              myArray(  myArrayZip(i)._2  )._2.lastBCast  =  3
+            }
+          }
+          case  "H2B"  =>  { 
+            myArrayZip  =  myArrayZip.filter(  _._1._2.lastBCast  ==  0  )
+            myArrayZip  =  myArrayZip.take(k)
+            var toBDC  =  myArrayZip.collect  {  case (  x  ,  i  ) => (  index.toDouble  , x._2  )  }
+            for  (  i  <-  0 to k-1) {
+              //println  (  "Length of myArrayat index "+index+" =   "  +  myArrayZip.length  )
+              //println(  "Selected for BCast   "+" index   "+index+"      "  +  myArrayZip(i)._2  )
+              myArray(  myArrayZip(i)._2  )  =  (  index.toDouble  ,  myArray(  myArrayZip(i)._2  )._2  )
+              myArray(  myArrayZip(i)._2  )._2.lastBCast  =  3
+
+            }
+          }
         }
         ////////////
         myArray.iterator
@@ -499,6 +522,12 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
             }
             case  "BB2B" =>  {
               myArray  =  myArray.filter(_._2.lastBCast==2)
+            }
+            case  "H2W" =>  {
+              myArray  =  myArray.filter(_._2.lastBCast==3)
+            }
+            case  "H2B" =>  {
+              myArray  =  myArray.filter(_._2.lastBCast==3)
             }
          }
          myArray.iterator
@@ -575,7 +604,10 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
               val tmp2  =  myArray.splitAt(k)
               var tmp1  =  recBD.filter(  _._1  !=  index  )
               tmp1  =  recBD.take(k)
+              for  (  p  <-  0  to  tmp1.length-1  )
+               tmp1(p)._2.lastBCast  =  2
               myArray  =  tmp1  ++  tmp2._2
+              
           }
           case  "H2B"  =>  {  
               for  (  i  <-  0  to  recBD.length-1  )  {
@@ -586,7 +618,7 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
               }
               Direction match  {
                 case  "MAX"  =>  {  recBD  =  recBD.sortWith(  _._2.fitness  >  _._2.fitness  )
-                  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
+                  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
                 }
                 case  "MIN"  =>  {  recBD  =  recBD.sortWith(  _._2.fitness  <  _._2.fitness  )
                   myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
@@ -595,7 +627,10 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
               val tmp2  =  myArray.splitAt(k)
               var tmp1  =  recBD.filter(  _._1  !=  index  )
               tmp1  =  recBD.take(k)
+              for  (  p  <-  0  to  tmp1.length-1  )
+               tmp1(p)._2.lastBCast  =  2
               myArray  =  tmp1  ++  tmp2._2
+              
           }
           case  "BB2W"  =>  {  
             Direction match  {

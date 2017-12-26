@@ -5,7 +5,7 @@ import org.apache.spark.rdd.RDD
 import java.io.File
 //import java.io.PrintWriter
 //import scala.io.Source
-import java.io._
+//import java.io._
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.StreamingContext._
 import scala.tools.ant.sabbus.Break
@@ -30,12 +30,12 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
 //  .set("spark.driver.maxResultSize","0")
     
   //Create Spark Context
-  val sc = new SparkContext(conf)
+  val sc = TestFunctions.sc
   //val ssc  =  new StreamingContext(conf, Seconds(1))
   
   //val a  =  sc.textFile("hdfs://172.18.160.17:54310/FahadMaqbool")
   
-  val accumNFC = sc.longAccumulator("NFC Accumulator")
+  //val accumNFC = sc.longAccumulator("NFC Accumulator")
   
   
   //  Parameters PreProcessing to appropriate objects
@@ -45,7 +45,7 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
       case 2 => {  chromoList  =  init.asInstanceOf[RandomDoubleInitializer].chromoList  }  //FileRDDCreation()
   }
   
-  accumNFC.add(chromoList.length)
+  
   
     
   val theSelector  =  SelectorType match{
@@ -54,7 +54,7 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
   
   }
   //  End Parameters PreProcessing
-  var optRecord  :  List[(  Int,  Int,  Double  )]  =  List()
+  var optRecord  :  List[(  Int,  Long ,  Double  )]  =  List()
   //Intialize Generation Number to 1
   var gens:Int  =  1
   
@@ -93,7 +93,7 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
       nextPartitions   =  theSelector.selection(nextPartitions)
       BestofBest  =  theSelector.selectBest(nextPartitions)
       println("The Best Solution After Generation "+gens+" is "+BestofBest )
-      optRecord  =  (  gens  ,  TestFunctions.NFC  ,  BestofBest._2.fitness  )  ::  optRecord
+      optRecord  =  (  gens  ,  TestFunctions.NFC.value.toLong  ,  BestofBest._2.fitness  )  ::  optRecord
       if (BestofBest._2.fitness<=0){
         theStopper.forceStop()
         gens  -=  1
@@ -114,16 +114,15 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
             
     }
     var temp:Int  =  (chromoList.length*CrossOverProb.toInt/100)  +  (chromoList.length*MutationProb.toInt/100)
-    accumNFC.add(   temp   )
+    
   }
   }
   
-  println("=================================>>>>>>>>>>>>>>>>>>>>>>>>>>				ACCUM NFC	=	"+accumNFC.value)
   
-//  val fOutput  = "\n\n\n"+ gens+", "+init.Dimensions+", "+SelectorType+", "+MutatorType+", "+Replacement+", "+direction+", "+
-//    CrossOverProb+", "+MutationProb+", "+stopper_Type+", "+crossType+", "+PartitionsCount+", "+BestofBest.fitness+", "+TestFunctions.NFC+", "+gens+", "+theStopper.timeDiff
-//    val outRDD  =  sc.parallelize(fOutput)
-//    outRDD.saveAsTextFile("hdfs://172.18.160.17:54310/FahadMaqbool/DatasetX/"+scala.util.Random.nextInt(1000))
+  val fOutput  = "\n\n\nGens= "+ gens+",	Dimensions= "+init.Dimensions+",	Selector= "+SelectorType+",	Mutator= "+MutatorType+",	Replace= "+Replacement+",	Dir= "+direction+",	xovrP= "+
+    CrossOverProb+",	MutP= "+MutationProb+",	Stoper= "+stopper_Type+",	xovr= "+crossType+",	Partis= "+PartitionsCount+",	bdStgy= "+bdCastStrategy+",	bdSize= "+bdCastSize+",	GenGap= "+GenGap+",	NFC= "+TestFunctions.NFC.value+",	Time= "+theStopper.timeDiff
+    val outRDD  =  sc.parallelize(fOutput)
+    outRDD.saveAsTextFile("hdfs://172.18.160.17:54310/FahadMaqbool/DatasetX/"+gens+"-"+init.Dimensions+"-"+bdCastStrategy+"-"+bdCastSize+"-"+scala.util.Random.nextInt(1000)+".txt")
 
     
 }

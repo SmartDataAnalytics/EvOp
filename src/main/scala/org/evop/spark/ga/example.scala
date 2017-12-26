@@ -24,6 +24,8 @@ object example {
     val  k  =  readInt()
     println("Sharing Strategy	?	:	B2B	/	B2W	/	H2B	/	H2W	/	BB2B	/	BB2W")
     val  st  =  readLine().toUpperCase()
+    println("Number of Partitions ? ")
+    val  parti  =  readInt()
   
     
     if(s.toLowerCase()=="r" || s.toLowerCase()=="roulette")  s="ROULETTE"
@@ -44,18 +46,18 @@ object example {
     
     if(o=="SPHERE"){
     val ri=new RandomDoubleInitializer(p, d,  TestFunctions.SphereBound ,  TestFunctions.SphereFunc  )
-    println("NFC          "+TestFunctions.NFC)
+    
     val parGA=new GA(  TestFunctions.SphereFunc,  ri,  s,  m,  r,  c,  "MIN",  30  ,  2  ,  
-        "MAX_GENS",  g,  2 ,  gp  ,  st  ,  k  )
+        "MAX_GENS",  g,  parti ,  gp  ,  st  ,  k  )
     }
     else{
     val ri=new RandomDoubleInitializer(p, d,  TestFunctions.AckleyBound ,  TestFunctions.AckleyFunc  )
-    println("NFC          "+TestFunctions.NFC)
+    
     val parGA=new GA(  TestFunctions.AckleyFunc,  ri,  s,  m,  r,  c,  "MIN",  30  ,  2  ,
-        "MAX_GENS",  g,  2 ,  gp  ,  st  ,  k  )
+        "MAX_GENS",  g,  parti ,  gp  ,  st  ,  k  )
     }
 
-    println("NFC          "+TestFunctions.NFC)
+    println("NFC          "+TestFunctions.NFC.value)
     
 
   }
