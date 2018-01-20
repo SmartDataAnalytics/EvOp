@@ -1,4 +1,4 @@
-package org.evop.spark.ga
+package org.evop.spark.island
 
 import scala.util.control.Breaks._
 import java.util.Calendar

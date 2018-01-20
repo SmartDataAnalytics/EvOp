@@ -1,4 +1,4 @@
-package org.evop.spark.ga
+package org.evop.spark.island
 
 object example {
   def main(  args:  Array[String]  )  {

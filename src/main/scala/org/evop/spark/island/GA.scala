@@ -1,4 +1,4 @@
-package org.evop.spark.ga
+package org.evop.spark.island
 
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -108,10 +108,6 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
       }
       
 
-      gens  +=  1
-    }
-    else  if(  gens  %  gap  ==  0)  {
-      //nextPartitions   =  theSelector.selection(nextPartitions)
       nextPartitions  =  theSelector.eliminateWeak(  nextPartitions  ,  PartitionsCount  )
       nextPartitions.collect()
       gens  +=  1
@@ -121,7 +117,7 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
     else if (gap>2){
       nextPartitions   =  theSelector.selection(nextPartitions,gap-1)
       nextPartitions.collect()
-      gens  +=  gap-2
+      gens  +=  gap-1
       
 
     }
@@ -136,7 +132,7 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
     ",	Partis= "+PartitionsCount+",	bdStgy= "+bdCastStrategy+",	bdSize= "+bdCastSize+",	GenGap= "+GenGap+",	Time= "+theStopper.timeDiff+"\n\n\n\n"
     //val outRDD  =  sc.parallelize(fOutput)
     //outRDD.saveAsTextFile("hdfs://172.18.160.17:54310/FahadMaqbool/DatasetX/"+gens+"-"+init.Dimensions+"-"+bdCastStrategy+"-"+bdCastSize+"-"+scala.util.Random.nextInt(1000)+".txt")
-  val fw = new FileWriter("/data/home/FahadMaqbool/PGA/Results.txt", true)
+  val fw = new FileWriter("/data/home/FahadMaqbool/PGA/IslResults.txt", true)
   fw.write(fOutput)
   fw.close()
   
@@ -144,7 +140,7 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
     CrossOverProb+",	MutP= "+MutationProb+",	Stoper= "+stopper_Type+",	xovr= "+crossType+",	Partis= "+PartitionsCount+",	bdStgy= "+bdCastStrategy+",	bdSize= "+bdCastSize+",	GenGap= "+GenGap+",	Time= "+theStopper.timeDiff+"\n\n\n\n"
     //val outRDD  =  sc.parallelize(fOutput)
     //outRDD.saveAsTextFile("hdfs://172.18.160.17:54310/FahadMaqbool/DatasetX/"+gens+"-"+init.Dimensions+"-"+bdCastStrategy+"-"+bdCastSize+"-"+scala.util.Random.nextInt(1000)+".txt")
-  val fw2 = new FileWriter("/data/home/FahadMaqbool/PGA/Details.txt", true)
+  val fw2 = new FileWriter("/data/home/FahadMaqbool/PGA/IslDetails.txt", true)
   fw2.write(fOutput)
   for (  u  <-  0 to optRecord.length-1  )
     fw2.write(optRecord(u)._1+"	,	"+optRecord(u)._3+"	,	"+optRecord(u)._2)

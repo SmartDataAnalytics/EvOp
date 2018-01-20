@@ -1,4 +1,4 @@
-package org.evop.spark.ga
+package org.evop.spark.island
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
@@ -285,7 +285,7 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
         var B  =  myArray
         for  (  i  <-  0 to myArray.length-1)  {
             if  (  myArray(  i  )._2.lastBCast  ==  2  )
-              myArray(  i  )._2.lastBCast  =  1
+              myArray(  i  )._2.lastBCast  =  0
             if  (  myArray(  i  )._2.lastBCast  ==  3  )
               myArray(  i  )._2.lastBCast  =  0
           }

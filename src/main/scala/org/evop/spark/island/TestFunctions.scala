@@ -1,4 +1,4 @@
-package org.evop.spark.ga
+package org.evop.spark.island
 
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
