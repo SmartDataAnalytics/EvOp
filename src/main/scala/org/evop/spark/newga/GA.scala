@@ -1,4 +1,4 @@
-package org.evop.spark.ga
+package org.evop.spark.newga
 
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -33,6 +33,7 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
 //  .set("spark.driver.maxResultSize","0")
     
   //Create Spark Context
+  //val conf = new SparkConf().setAppName("Parallel GA").setMaster("local[*]")
   val conf = new SparkConf().setAppName("Parallel GA").setMaster(configs)
   val sc  =  new SparkContext  (  conf  )
   
@@ -54,8 +55,8 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
   
     
   val theSelector  =  SelectorType match{
-    case "RANDOM"    =>  new RandomSelector(  sc  ,  MutatorType  ,  Replacement  ,  crossType,  direction  ,  CrossOverProb  ,  MutationProb  ,  bdCastStrategy  ,  bdCastSize  )
-    case "ROULETTE"    =>  new RouletteSelector(  sc  ,  MutatorType  ,  Replacement  ,  crossType,  direction  ,  CrossOverProb  ,  MutationProb  ,  bdCastStrategy  ,  bdCastSize  )
+    case "RANDOM"    =>  new RandomSelector(  sc  ,  MutatorType  ,  Replacement  ,  crossType,  direction  ,  CrossOverProb  ,  MutationProb  ,  bdCastStrategy  ,  bdCastSize  ,  PartitionsCount  )
+    case "ROULETTE"    =>  new RouletteSelector(  sc  ,  MutatorType  ,  Replacement  ,  crossType,  direction  ,  CrossOverProb  ,  MutationProb  ,  bdCastStrategy  ,  bdCastSize  ,  PartitionsCount  )
   
   }
   //  End Parameters PreProcessing
@@ -78,65 +79,46 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
   
   
   var condition  =  true
-  var nextPartitions  =  Partitioned
+  var nextPartitions  =  sc.parallelize  (  chromoRDD.take(  bdCastSize  )  )
+  theSelector.shareBest(chromoRDD.take(  bdCastSize  ) )
     
   //println("Starting While")
-  var BestofBest  =  (0.0  ,  new Chromosome(0.0,Array(new Gene(0))))
+  var BestofBest  =  chromoList(0)._2  //new Chromosome(0.0,Array(new Gene(0)))
   val  theStopper:Stopper  =  new Stopper(stopper_Type,Stopper_Threshold)
   var Threshold:Double  =  1.toDouble  /  chromoList(0)._2.Genes.length.toDouble
   breakable{
-  while(  !(  theStopper.stop(gens,0)  )  &&  condition  ==  true  )  {
+      while(  !(  theStopper.stop(gens,0)  )  &&  condition  ==  true  )  {
+        
+        
+          nextPartitions   =  theSelector.selection(Partitioned)
+          var Results  =  nextPartitions.collect()
+          Results  =  Results.sortWith(  _._2.fitness  <  _._2.fitness  )
+          var prRes  =  Results.map(x=>x._2)
+          prRes.foreach(println)
+          BestofBest  =  Results(0)._2
+          
+          optRecord  =  (  gens  ,  0.toLong  ,  BestofBest.fitness  )  ::  optRecord
+          if (BestofBest.fitness  <=  Threshold  ){
+            theStopper.forceStop()
+            gens  +=  gap
+            condition  =  false
+          }
+          else {
+            gens  +=  gap
+            theSelector.shareBest(Results)
+          }
+          println("The Best Solution After Generation "+gens+" is "+BestofBest )
     
-    
-//    nextPartitions.unpersist()
-//    nextPartitions = newPartitions
-//    nextPartitions.persist
-//    newPartitions.unpersist()
-    //nextPartitions.map(x=>x._2).foreach(println)
-    //println("Before Selection")
-    
-    if(  gens  %  gap  ==  1  )  {
-      nextPartitions   =  theSelector.selection(nextPartitions)
-      nextPartitions.collect()
-      BestofBest  =  theSelector.selectBest(nextPartitions)
-      println("The Best Solution After Generation "+gens+" is "+BestofBest )
-      optRecord  =  (  gens  ,  0.toLong  ,  BestofBest._2.fitness  )  ::  optRecord
-      if (BestofBest._2.fitness  <=  Threshold  ){
-        theStopper.forceStop()
-        gens  -=  1
-        condition  =  false
       }
-      
-
-    //  gens  +=  1
-    //}
-    //else  if(  gens  %  gap  ==  0)  {
-      //nextPartitions   =  theSelector.selection(nextPartitions)
-      nextPartitions  =  theSelector.eliminateWeak(  nextPartitions  ,  PartitionsCount  )
-      nextPartitions.collect()
-      gens  +=  1
-      
-
-    }
-    else if (gap>2){
-      nextPartitions   =  theSelector.selection(nextPartitions,gap-1)
-      nextPartitions.collect()
-      gens  +=  gap-1
-      
-
-    }
-    //var temp:Int  =  (chromoList.length*CrossOverProb.toInt/100)  +  (chromoList.length*MutationProb.toInt/100)
-    
-  }
   }
   
   
   
-  val fOutput   = "\n"+Calendar.getInstance().getTime+"\nGens= "+ gens+",	Dimensions= "+init.Dimensions+",	Func= "+TestFunctions.func+",	Population= "+chromoList.length+
-    ",	Partis= "+PartitionsCount+",	bdStgy= "+bdCastStrategy+",	bdSize= "+bdCastSize+",	GenGap= "+GenGap+", Val= "+BestofBest._2.fitness+",	Time= "+theStopper.timeDiff+"\n\n\n\n"
+  val fOutput   = "\n"+Calendar.getInstance().getTime+"\n"+"Dimensions= "+init.Dimensions+",	Func= "+TestFunctions.func+",	Population= "+chromoList.length+",	Partis= "+PartitionsCount+
+  ",	bdSize= "+bdCastSize+",	GenGap= "+GenGap+", VTR= "+Threshold+", Gens= "+ gens+", Fitness= "+BestofBest.fitness+",	Time= "+theStopper.timeDiff+",	bdStgy= "+bdCastStrategy+"\n"
     //val outRDD  =  sc.parallelize(fOutput)
     //outRDD.saveAsTextFile("hdfs://172.18.160.17:54310/FahadMaqbool/DatasetX/"+gens+"-"+init.Dimensions+"-"+bdCastStrategy+"-"+bdCastSize+"-"+scala.util.Random.nextInt(1000)+".txt")
-  val fw = new FileWriter("/data/home/FahadMaqbool/PGA/Results.txt", true)
+  val fw = new FileWriter("/data/home/FahadMaqbool/PGA/newResults.txt", true)
   fw.write(fOutput)
   fw.close()
   
@@ -144,7 +126,7 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
     CrossOverProb+",	MutP= "+MutationProb+",	Stoper= "+stopper_Type+",	xovr= "+crossType+",	Partis= "+PartitionsCount+",	bdStgy= "+bdCastStrategy+",	bdSize= "+bdCastSize+",	GenGap= "+GenGap+",	Time= "+theStopper.timeDiff+"\n"
     //val outRDD  =  sc.parallelize(fOutput)
     //outRDD.saveAsTextFile("hdfs://172.18.160.17:54310/FahadMaqbool/DatasetX/"+gens+"-"+init.Dimensions+"-"+bdCastStrategy+"-"+bdCastSize+"-"+scala.util.Random.nextInt(1000)+".txt")
-  val fw2 = new FileWriter("/data/home/FahadMaqbool/PGA/Details.txt", true)
+  val fw2 = new FileWriter("/data/home/FahadMaqbool/PGA/newDetails.txt", true)
   fw2.write(fOutput)
   for (  u  <-  0 to optRecord.length-1  )
     fw2.write(optRecord(u)._1+"	,	"+optRecord(u)._3+"	,	"+optRecord(u)._2)

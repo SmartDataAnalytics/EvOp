@@ -128,8 +128,8 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
   
   
   
-  val fOutput   = "\n\n\n"+Calendar.getInstance().getTime+"\nGens= "+ gens+",	Dimensions= "+init.Dimensions+",	Func= "+TestFunctions.func+",	Population= "+chromoList.length+
-    ",	Partis= "+PartitionsCount+",	bdStgy= "+bdCastStrategy+",	bdSize= "+bdCastSize+",	GenGap= "+GenGap+",	Time= "+theStopper.timeDiff+"\n\n\n\n"
+  val fOutput   = "\n"+Calendar.getInstance().getTime+"\nGens= "+ gens+",	Dimensions= "+init.Dimensions+",	Func= "+TestFunctions.func+",	Population= "+chromoList.length+
+    ",	Partis= "+PartitionsCount+",	bdStgy= "+bdCastStrategy+",	bdSize= "+bdCastSize+",	GenGap= "+GenGap+", Val= "+BestofBest._2.fitness+",	Time= "+theStopper.timeDiff+"\n\n\n\n"
     //val outRDD  =  sc.parallelize(fOutput)
     //outRDD.saveAsTextFile("hdfs://172.18.160.17:54310/FahadMaqbool/DatasetX/"+gens+"-"+init.Dimensions+"-"+bdCastStrategy+"-"+bdCastSize+"-"+scala.util.Random.nextInt(1000)+".txt")
   val fw = new FileWriter("/data/home/FahadMaqbool/PGA/IslResults.txt", true)
@@ -137,7 +137,7 @@ class GA(  f:  Array[Gene]  =>  Double  , init:Initializer  ,
   fw.close()
   
   val fDetail   = "\n\n\n"+Calendar.getInstance().getTime+"\nGens= "+ gens+",	Dimensions= "+init.Dimensions+",	Func= "+TestFunctions.func+",	Population= "+chromoList.length+",	Selector= "+SelectorType+",	Mutator= "+MutatorType+",	Replace= "+Replacement+",	Dir= "+direction+",	xovrP= "+
-    CrossOverProb+",	MutP= "+MutationProb+",	Stoper= "+stopper_Type+",	xovr= "+crossType+",	Partis= "+PartitionsCount+",	bdStgy= "+bdCastStrategy+",	bdSize= "+bdCastSize+",	GenGap= "+GenGap+",	Time= "+theStopper.timeDiff+"\n\n\n\n"
+    CrossOverProb+",	MutP= "+MutationProb+",	Stoper= "+stopper_Type+",	xovr= "+crossType+",	Partis= "+PartitionsCount+",	bdStgy= "+bdCastStrategy+",	bdSize= "+bdCastSize+",	GenGap= "+GenGap+",	Time= "+theStopper.timeDiff+"\n"
     //val outRDD  =  sc.parallelize(fOutput)
     //outRDD.saveAsTextFile("hdfs://172.18.160.17:54310/FahadMaqbool/DatasetX/"+gens+"-"+init.Dimensions+"-"+bdCastStrategy+"-"+bdCastSize+"-"+scala.util.Random.nextInt(1000)+".txt")
   val fw2 = new FileWriter("/data/home/FahadMaqbool/PGA/IslDetails.txt", true)
