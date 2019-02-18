@@ -3,7 +3,14 @@ package dsgd
 import org.apache.spark.mllib.optimization
 import org.apache.spark.mllib.optimization.GradientDescent
 import org.apache.spark.mllib.optimization.Gradient
-import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import org.apache.spark.mllib.linalg.{DenseVector, Vector, Vectors}
+
+//import cern.colt.matrix.linalg.Blas
+import org.apache.spark.mllib.linalg.BLAS
+//import org.apache.spark.ml.linalg.BLAS
+
+import com.github.fommil.netlib.BLAS
+
 
 class SphereGradient extends Gradient  {
   def dot  (  data  :  Vector  ,  weights  :  Vector  )  :  Double  =  {
@@ -19,6 +26,8 @@ class SphereGradient extends Gradient  {
     dotProduct
   }
   
+
+  
   override def compute(data: Vector, label: Double, weights: Vector): (Vector, Double) = {
     
     val  diff  =  dot  (  data  ,  weights  )  //  -  label
@@ -26,9 +35,14 @@ class SphereGradient extends Gradient  {
     val  loss  =  diff  *  diff  /  2.0
     //val gradient = data.copy
     
-    var  Arr  =  Array.fill  (  data.size  )  (  2.0  )
-    val  gradient  =  Vectors.dense  (  Arr  )
-    //println("GRADIENT IS")
+    //var  Arr  =  Array.fill  (  data.size  )  (  2.0  )
+    var Arr  =  data.copy.toArray
+    println("Arr")
+    Arr.foreach(println)
+    Arr  .  map  (  x  =>  x  *  2  )
+    var  gradient  =  Vectors.dense  (  Arr  )
+    
+    println("GRADIENT IS")
     //gradient.toArray.foreach(println)
     //println("LOSS IS	"+loss)
     
@@ -42,10 +56,27 @@ class SphereGradient extends Gradient  {
       weights: Vector,
       cumGradient: Vector): Double = {
     
+    var B  =  BLAS.getInstance
+    
+//    println("Label is "+label)
+//    println("Data is ")
+//    println(  data.toArray.mkString("  &  ")  )
+    var  Arr  =  Array.fill  (  data.size  )  (  2.0  )
+    var cumGradientArr  =  Vectors.dense(  Arr  )
     val diff = dot(data, weights) - label
-    //println("	DIFF IS	"+diff)
-    //  ppkaxpy(diff, data, cumGradient)
+    //println("	DIFF IS	"+diff * diff / 2.0)
+    var data1  =  data.toArray.map(x=>x*2)
+    var data2  =  Vectors.dense(data1)
+    B.daxpy(data2.size, 1, data2.toDense.values, 1, cumGradient.toDense.values, 1)
+//    println("cumGradient is ")
+//    println(  cumGradient.toArray.mkString(" ,")  )
+//    println("---------------")
+    //axpy(diff, data, cumGradientArr)
+    //  B.
+    //B.axpy(diff, data, cumGradient)
+    //println(  weights.toArray.mkString(" # ")  )
     diff * diff / 2.0
+  
   }
   
 }

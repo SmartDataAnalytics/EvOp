@@ -32,7 +32,7 @@ class RandomInitializer(  P  :  Int  , CL:  Int  , valBound:  Array[Int]  , f  :
                     val randomAlleles  =  temp.map(  x => new Gene(x)  ).toArray
                     val newchromo  =  new Chromosome(i, randomAlleles,  f  )  // Create a chromosome from Randomly created Alleles
                     chromoList = (i.asInstanceOf[Double], newchromo) :: chromoList
-                    println(newchromo)
+                    //println(newchromo)
                     
                     }
   
@@ -44,7 +44,7 @@ class RandomInitializer(  P  :  Int  , CL:  Int  , valBound:  Array[Int]  , f  :
                     val randomAlleles  =  temp.map(  x => new Gene(x)  ).toArray
                     val newchromo  =  new Chromosome(i, randomAlleles,  f  )  // Create a chromosome from Randomly created Alleles
                     chromoList = (i.asInstanceOf[Double], newchromo) :: chromoList
-                    println(newchromo)
+                    //println(newchromo)
                     }
   }
 }
