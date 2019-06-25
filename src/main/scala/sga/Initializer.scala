@@ -1,6 +1,5 @@
-package org.evop.spark.newga
+package sga
 
-import scala.io.Source
 
 //import scala.collection.parallel.ParIterableLike.Foreach
 
@@ -20,7 +19,7 @@ abstract class Initializer {
   
   
 }
-class RandomInitializer(  P  :  Int  , CL:  Int  , valBound:  Array[Int]  , f  :  (Array[Gene],Double)  =>  Double  ) extends Initializer {
+class RandomInitializer(  P  :  Int  , CL:  Int  , valBound:  Array[Int]  , f  :  Array[Gene]  =>  Double  ) extends Initializer {
   Populaion = P
   Dimensions  =  CL
   InitType=1
@@ -30,8 +29,7 @@ class RandomInitializer(  P  :  Int  , CL:  Int  , valBound:  Array[Int]  , f  :
     case 2  =>      for(i <-  Populaion to 1 by -1)  {
                     val temp  =  List.fill(CL)( valBound(0) + r.nextInt( valBound(1) - valBound(0) +1  ) )  // Initialize the chromosomes with random values within specified range
                     val randomAlleles  =  temp.map(  x => new Gene(x)  ).toArray
-                    var  fitnessVal1  =  f  (  randomAlleles  ,  0)
-                    val newchromo  =  new Chromosome(i, randomAlleles,  f  ,  fitnessVal1  )  // Create a chromosome from Randomly created Alleles
+                    val newchromo  =  new Chromosome(i, randomAlleles,  f  )  // Create a chromosome from Randomly created Alleles
                     chromoList = (i.asInstanceOf[Double], newchromo) :: chromoList
                     println(newchromo)
                     
@@ -43,14 +41,13 @@ class RandomInitializer(  P  :  Int  , CL:  Int  , valBound:  Array[Int]  , f  :
                         temp  =  temp.map(  i  =>  (    valBound(i-1) + r.nextInt( valBound(CL+i-1)  -  valBound(i-1) +1 ) )  )
                     //var temp  =  List.fill(CL)( minval + r.nextInt( maxval-minval ) )  // Initialize the chromosomes with random values within specified range
                     val randomAlleles  =  temp.map(  x => new Gene(x)  ).toArray
-                    var  fitnessVal1  =  f  (  randomAlleles  ,  0  )
-                    val newchromo  =  new Chromosome(i, randomAlleles,  f  ,  fitnessVal1  )  // Create a chromosome from Randomly created Alleles
+                    val newchromo  =  new Chromosome(i, randomAlleles,  f  )  // Create a chromosome from Randomly created Alleles
                     chromoList = (i.asInstanceOf[Double], newchromo) :: chromoList
                     println(newchromo)
                     }
   }
 }
-class RandomDoubleInitializer(  P  :  Int  , CL:  Int  , valBound:  Array[Int]  , f  :  (  Array[Gene]  ,  Double  )  =>  Double  ) extends Initializer {
+class RandomDoubleInitializer(  P  :  Int  , CL:  Int  , valBound:  Array[Int]  , f  :  Array[Gene]  =>  Double  ) extends Initializer {
   Populaion = P
   Dimensions  =  CL
   InitType=2
@@ -73,8 +70,7 @@ class RandomDoubleInitializer(  P  :  Int  , CL:  Int  , valBound:  Array[Int]  
                     }
                     
                     val randomAlleles  =  temp.map(  x => new Gene(x)  ).toArray
-                    var  fitnessVal1  =  f  (  randomAlleles  ,  0  )
-                    val newchromo  =  new Chromosome(i, randomAlleles,  f  ,  fitnessVal1  )  // Create a chromosome from Randomly created Alleles
+                    val newchromo  =  new Chromosome(i, randomAlleles,  f  )  // Create a chromosome from Randomly created Alleles
                     chromoList = (i.asInstanceOf[Double], newchromo) :: chromoList
                     
                     println(newchromo)
@@ -86,8 +82,7 @@ class RandomDoubleInitializer(  P  :  Int  , CL:  Int  , valBound:  Array[Int]  
                         temp  =  temp.map(  i  =>  (    valBound(i-1) + (r.nextInt( 100 )/100)  *  ( valBound(CL+i-1)  -  valBound(i-1) +1 )     )  )
                     //var temp  =  List.fill(CL)( minval + r.nextInt( maxval-minval ) )  // Initialize the chromosomes with random values within specified range
                     val randomAlleles  =  temp.map(  x => new Gene(x)  ).toArray
-                    var  fitnessVal1  =  f  (  randomAlleles  ,  0.0  )
-                    val newchromo  =  new Chromosome(i, randomAlleles,  f  ,  fitnessVal1  )  // Create a chromosome from Randomly created Alleles
+                    val newchromo  =  new Chromosome(i, randomAlleles,  f  )  // Create a chromosome from Randomly created Alleles
                     chromoList = (i.asInstanceOf[Double], newchromo) :: chromoList
                     println(newchromo)
                     }
@@ -111,9 +106,9 @@ class RandomInitializer(P:Int, CL:Int, minval:Int=0, maxval:Int=1000, f:Array[Ge
 //class RandomInitializer(P:Int, CL:Int, valBounds:Array[Int], f:Array[Gene]=>Double) extends Initializer 
   
 
-class FileInitializer(P:Int, CL:Int, fname:String) extends Initializer {
-  Populaion = P
-  InitType = 2
-  
-  val listOfLines = Source.fromFile(fname).getLines.toList
-}
+//class FileInitializer(P:Int, CL:Int, fname:String) extends Initializer {
+//  Populaion = P
+//  InitType = 2
+//  
+//  val listOfLines = Source.fromFile(fname).getLines.toList
+//}

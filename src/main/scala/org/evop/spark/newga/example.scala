@@ -7,6 +7,10 @@ import org.apache.spark.storage.StorageLevel
 
 object example extends Serializable {
   def main(  args:  Array[String]  )  {
+    List(10) match  {
+      case x::y::z  =>  println(x+" - "+y)
+      case x::Nil =>  println(x)
+    }
     println("Dimensions ?	:")
     val  d  =  readInt()
     println("Population	? :")
@@ -66,19 +70,19 @@ object example extends Serializable {
 //        println  (  tempData.mkString(", "))
 //        tempData.toIterator
 //    }.persist(StorageLevel.MEMORY_AND_DISK)
-      var min  =  TestFunctions.SphereBound(0)
-      var max  =  TestFunctions.SphereBound(1)
+      var min  =  TestFunctions.GriewankBound(0)
+      var max  =  TestFunctions.GriewankBound(1)
       val chromoRDD = sc.parallelize(  0 until p, parti).mapPartitionsWithIndex { (idx, iter) =>
         val random = new Random(  idx  )
         var tempData  =  iter.map(i => (i*1.0,Array.fill(d)(  (  new Gene  (random.nextDouble()*(max-min)+min  )  )  )  )  )
         var Data  =  tempData.map(i => (  (  idx*parti+i._1).toDouble  ,  
-          new Chromosome(  (  idx*parti+i._1).toDouble, i._2,  TestFunctions.SphereFunc  ,  TestFunctions.SphereFunc(  i._2  )  )   )  )
+          new Chromosome(  (  idx*parti+i._1).toDouble, i._2,  TestFunctions.GriewankFunc  ,  TestFunctions.GriewankFunc(  i._2 ,  0 )  )   )  )
         //  iter.map(i => (1.0, Vectors.dense(Array.fill(d)(  random.nextDouble()*(max-min)+min  ))))
         Data.toIterator
       }  .  persist(StorageLevel.MEMORY_AND_DISK)
     
-    val parGA=new GA(  TestFunctions.SphereFunc,  s,  m,  r,  c,  "MIN",  cp  ,  mp  ,  
-        "MAX_GENS",  g,  parti ,  gp  ,  st  ,  k  ,  "local[*]",  p, d,  TestFunctions.SphereBound,  sc  ,   chromoRDD)
+    val parGA=new GA(  TestFunctions.GriewankFunc,  s,  m,  r,  c,  "MIN",  cp  ,  mp  ,  
+        "MAX_GENS",  g,  parti ,  gp  ,  st  ,  k  ,  "local[*]",  p, d,  TestFunctions.GriewankBound,  sc  ,   chromoRDD)
 //    }
 //    else{
 //    val ri=new RandomDoubleInitializer(p, d,  TestFunctions.AckleyBound ,  TestFunctions.AckleyFunc  )

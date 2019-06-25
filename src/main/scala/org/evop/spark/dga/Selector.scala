@@ -14,6 +14,8 @@ import scalax.collection.GraphTraversal.Direction
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.StreamingContext._
 import scala.util.control.Breaks._
+import scala.util.Random
+
 //import scala.collection.parallel.ParIterableLike.Foreach
 
 
@@ -28,8 +30,8 @@ abstract class Selector  extends Serializable{
 //  val Direction  =  sc.broadcast  (  Direct  )
     
   var SelectorType:Int  =  0
-  def selection(rdd: RDD[  (Double, Chromosome) ],  genGap:Int=1): RDD[  (Double, Chromosome)]  =   {
-      rdd
+  def selection(rdd: RDD[  (Double, Chromosome) ],  genGap:Int=1): Array[  (Double, Chromosome)]  =   {
+      rdd.collect()
   }
   def selectBest  (  Partitioned: RDD[  (Double, Chromosome)  ]  )    :  (Double, Chromosome)  =  {
       var p  =  Partitioned.take(1)
@@ -63,7 +65,7 @@ class RandomSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceScheme:
   
   
   override def selection(  Partitioned: RDD[  (Double, Chromosome)  ],  genGap:Int  =  1  
-        ) : RDD[  (Double, Chromosome)] =  {
+        ) : Array[  (Double, Chromosome)] =  {
     
     val ReplacementScheme  =  ReplaceScheme  
     val theMutator  =  MutatorType match  {
@@ -163,7 +165,7 @@ class RandomSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceScheme:
         myArray.iterator
       }
     }
-   mapped
+   mapped.persist().collect()
   }
   override def shareBest  (  SelectedBests: Array[  (Double, Chromosome)  ]    )  {
     
@@ -228,7 +230,7 @@ class RandomSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceScheme:
         myArray.iterator
       }
     }
-   mapped
+   mapped.persist()
   }
 }
 
@@ -267,7 +269,7 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
   
   
   override def selection(  Partitioned: RDD[  (Double, Chromosome)  ],  genGap:Int  =  1  
-        ) : RDD[  (Double, Chromosome)] =  {
+        ) : Array[  (Double, Chromosome)] =  {
     val Direction  =  Direct
     val bdStrategy  =  bdCastStrategy
     val k  =  bdCastSize
@@ -281,8 +283,14 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
     
     val  CrossOverProbability  =  CrossOverProb
     val  MutationProbability  =  MutationProb
-    
+    val random = new Random(  )
+    var ring:Double  =  1+random.nextInt()%PartitionsCount
     var recBD  =  bestSolutions.value
+    recBD.sortWith(  _._2.fitness  <  _._2.fitness  )
+    recBD  =  recBD.take(1) ++ recBD.filter(_._1  ==  ring  )
+    println  (  "Size of Best Solutions	"  +  recBD.length  )
+    
+    //  bestSolutions.unpersist()
     
     val mapped  =  Partitioned.mapPartitionsWithIndex{
 
@@ -292,6 +300,9 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
         myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
         
         if (  bdStrategy  ==  "BB2W"  )  {
+//          for (p<-0 to recBD.length-1)
+//            println(  "   #############   "  +  recBD(p).toString()  +  "   #############   "  +  index  )
+          
           myArray  =  myArray.take(  myArray.length  -  recBD.length  )
           myArray  =  recBD  ++  myArray
         }
@@ -425,12 +436,12 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
             
             //if   (B.length>0)
             //  break
-//            var Threshold:Double  =  1.toDouble  /  myArray(0)._2.Genes.length.toDouble
-//            if  (  myArray.map(  x  =>  x._2.fitness  ).min  <=  Threshold  ){
-//              println("***************************************************** YES FOUND *************************")
-//                check=1
-//                break
-//            }
+            var Threshold:Double  =  1.toDouble  /  myArray(0)._2.Genes.length.toDouble
+            if  (  myArray.map(  x  =>  x._2.fitness.abs  ).min  <=  Threshold  ){
+              println("***************************************************** YES FOUND *************************")
+                check=1
+                break
+            }
             //////// Do this as many times as is the mutation ratio
             for (i  <-  1  to mutations  ){
               r1  =  RandomNumber.nextInt(myArray.length-1)
@@ -441,37 +452,43 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
               //println("AFTER MUTATION						"+Mutated)
             }
             
-//            if  (  myArray.map(  x  =>  x._2.fitness  ).min  <=  Threshold  ){
-//              println("***************************************************** YES FOUND2 *************************")
-//                check=1
-//                break
-//            }
+            if  (  myArray.map(  x  =>  x._2.fitness.abs  ).min  <=  Threshold  ){
+              println("***************************************************** YES FOUND2 *************************")
+                check=1
+                break
+            }
             
         }
         }
         ////////// Task relevant to Broadcast ///////////
        
               Direction match  {
-                case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness  >  _._2.fitness  )
-                case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness  <  _._2.fitness  )
+                case  "MAX"  =>  myArray  =  myArray.sortWith(  _._2.fitness.abs  >  _._2.fitness.abs  )
+                case  "MIN"  =>  myArray  =  myArray.sortWith(  _._2.fitness.abs  <  _._2.fitness.abs  )
               }
+        //myArray  =  myArray.take(k*5)
+        //var r2  =  new Random()
+        //var start  =  r2.nextInt(  k*5-k-1  )+1
+        //myArray  =  myArray.slice  (  start  ,  start+k  )
         myArray  =  myArray.take(k)
         
         myArray  =  myArray.map( x  => (  index.toDouble  ,  x._2)  )
+        
         myArray.iterator
       }
     }
-   mapped
+   mapped.persist().collect()
   }
   
   override def shareBest  (  SelectedBests: Array[  (Double, Chromosome)  ]    )  {
     bestSolutions.update(  SelectedBests    )
+    //println("Ready to Update")
   }
   
   override def selectBest  (  Partitioned: RDD[  (Double, Chromosome)  ]    )  :  (Double, Chromosome)  =  {
     val Direction  =  Direct
     val bdStrategy  =  bdCastStrategy
-    //println("Ready to Broadcast")
+    println("Ready to Broadcast")
     var k:Int  =  bdCastSize
      val mapped  =  Partitioned.mapPartitionsWithIndex{
       (index, Iterator)  => {
@@ -502,23 +519,20 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
          }
          myArray.iterator
       }
+      
     } 
-   var SelectedBests  =  mapped.collect()
+   var SelectedBests  =  mapped.persist().collect()
    println("BEST SOLUTIONS")
    Direction match  {
      case  "MAX"  =>  SelectedBests  =  SelectedBests.sortWith(  _._2.fitness  >  _._2.fitness  )
      case  "MIN"  =>  SelectedBests  =  SelectedBests.sortWith(  _._2.fitness  <  _._2.fitness  )
    }
    
-   var concatChromo  =  SelectedBests(0)._2.Genes
-   for (  i  <-  1  to  SelectedBests.length  )  
-     concatChromo  =  concatChromo  ++  SelectedBests(i)._2.Genes
-     
-   SelectedBests.foreach(println)
-   bestSolutions.update(  SelectedBests    )
+   println  (  "Printing Best Solutions"  )
+   SelectedBests  .  foreach(  println  )
+   bestSolutions  .  update  (  SelectedBests    )
    
-   //SelectedBests(0)
-   (  0.0,  new Chromosome(concatChromo)  )  
+   SelectedBests(0)
   }
    
   
@@ -636,6 +650,6 @@ class RouletteSelector(  sc:SparkContext  ,  MutatorType:String  ,  ReplaceSchem
         myArray.iterator
       }
     }
-   mapped
+   mapped.persist()
   }
 }

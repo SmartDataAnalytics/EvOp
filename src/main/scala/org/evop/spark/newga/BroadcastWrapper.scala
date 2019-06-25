@@ -13,10 +13,16 @@ case class BroadcastWrapper[T: ClassTag](
                                         ) extends Serializable {
 
   var broadcasted: Broadcast[T] = sc.broadcast(_v)
+  
+  def unpersist()  {
+    broadcasted.unpersist()
+    broadcasted.destroy()
+  }
 
   def update(v: T): Unit = {
     
     try {
+      broadcasted.unpersist()
       broadcasted.destroy()
     }
     catch {

@@ -1,4 +1,7 @@
-package org.evop.spark.dga
+package sga
+
+
+
 
 //import scala.collection.parallel.ParIterableLike.Foreach
 
@@ -7,17 +10,15 @@ package org.evop.spark.dga
  * Member Variables: GeneCount, Genes
  * Member Functions: X,+ 
  */
-
-class Chromosome( Id:Double, AlleleVals:Array[Gene], f:(Array[Gene],Double)=>Double  ,  fitnessVal:Double  ) extends Serializable  {
-  def this(AlleleVals:Array[Gene])  =  this( 0, AlleleVals,  {case(AlleleVals,0.0) =>0}  ,  0.0 )
-  def this( Id:Double, AlleleVals:Array[Gene])  =  this( Id, AlleleVals,  {case(AlleleVals,0.0) =>0}  ,  0.0 )
-  var ID:Double = Id
+class Chromosome( Id:Double, AlleleVals:Array[Gene], f:Array[Gene]=>Double  ) extends Serializable  {
+  def this(AlleleVals:Array[Gene])  =  this( 0, AlleleVals,  AlleleVals =>0 )
+  def this( Id:Double, AlleleVals:Array[Gene])  =  this( Id, AlleleVals,  AlleleVals =>0 )
+  val ID:Double = Id
   val GeneCount:Int=AlleleVals.length
   val Genes: Array[Gene]= AlleleVals
-  val fitness  =  fitnessVal
-  
+  val fitness  =  f(Genes)
+  TestFunctions.NFC  +=  1
   val fitnessFunc  =  f
-  var lastBCast  =  0
      
    
   //  Single Point Crossover: +
@@ -25,10 +26,8 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:(Array[Gene],Double)=>Dou
     val mid=GeneCount/2
     var Id1  =  (this.ID+that.ID)/2  +  (math floor scala.util.Random.nextDouble()  *100)/10000
     var Id2  =  (this.ID+that.ID)/2  +  (math floor scala.util.Random.nextDouble()  *100)/10000
-    var fitnessVal1  =  f  (  Genes.slice(0, mid) ++ that.Genes.slice(mid, that.Genes.length ) ,0 )
-    var fitnessVal2  =  f  (  that.Genes.slice(0, mid) ++ Genes.slice(mid, that.Genes.length ) ,0 )
-    val OffSpring1:Chromosome = new Chromosome( Id1,  Genes.slice(0, mid) ++ that.Genes.slice(mid, that.Genes.length ),  f  ,  fitnessVal1  )
-    val OffSpring2:Chromosome = new Chromosome( Id2,  that.Genes.slice(0, mid) ++ Genes.slice(mid, that.Genes.length ),  f  ,  fitnessVal2  )
+    val OffSpring1:Chromosome = new Chromosome( Id1,  Genes.slice(0, mid) ++ that.Genes.slice(mid, that.Genes.length ),  f)
+    val OffSpring2:Chromosome = new Chromosome( Id2,  that.Genes.slice(0, mid) ++ Genes.slice(mid, that.Genes.length ),  f)
     //println(OffSpring1.toString())
     //println(OffSpring2.toString())
     (  OffSpring1,  OffSpring2  )
@@ -42,10 +41,9 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:(Array[Gene],Double)=>Dou
         val mid=i
         var Id1  =  (this.ID+c.ID)/2  +  (math floor scala.util.Random.nextDouble()  *100)/10000
         var Id2  =  (this.ID+c.ID)/2  +  (math floor scala.util.Random.nextDouble()  *100)/10000
-        var fitnessVal1  =  f  (  Genes.slice(0, mid) ++ c.Genes.slice(mid, c.Genes.length  ) ,0 )
-        var fitnessVal2  =  f  (  c.Genes.slice(0, mid) ++ Genes.slice(mid, c.Genes.length  ) ,0 )
-        val OffSpring1:Chromosome = new Chromosome(  Id1,  Genes.slice(0, mid) ++ c.Genes.slice(mid, c.Genes.length ),  f  ,  fitnessVal1)
-        val OffSpring2:Chromosome = new Chromosome(  Id2,  c.Genes.slice(0, mid) ++ Genes.slice(mid, c.Genes.length ),  f  ,  fitnessVal1)
+    
+        val OffSpring1:Chromosome = new Chromosome(  Id1,  Genes.slice(0, mid) ++ c.Genes.slice(mid, c.Genes.length ),  f)
+        val OffSpring2:Chromosome = new Chromosome(  Id2,  c.Genes.slice(0, mid) ++ Genes.slice(mid, c.Genes.length ),  f)
         //println(OffSpring1.toString())
         //println(OffSpring2.toString())
         (  OffSpring1,  OffSpring2  )
@@ -59,10 +57,8 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:(Array[Gene],Double)=>Dou
     var solutions  =  Uniform(  this.Genes,  that.Genes  )
     var Id1  =  (this.ID+that.ID)/2  +  (math floor scala.util.Random.nextDouble()  *100)/10000
     var Id2  =  (this.ID+that.ID)/2  +  (math floor scala.util.Random.nextDouble()  *100)/10000
-    var fitnessVal1  =  f  (  solutions._1 , 0 )
-        var fitnessVal2  =  f  (  solutions._2 , 0  )
-    val OffSpring1:Chromosome = new Chromosome( Id1,  solutions._1  ,  f  ,  fitnessVal1  )
-    val OffSpring2:Chromosome = new Chromosome( Id2,  solutions._2  ,  f  ,  fitnessVal2  )
+    val OffSpring1:Chromosome = new Chromosome( Id1,  solutions._1,  f)
+    val OffSpring2:Chromosome = new Chromosome( Id2,  solutions._2,  f)
     //println(OffSpring1.toString())
     //println(OffSpring2.toString())
     (  OffSpring1,  OffSpring2  )
@@ -89,8 +85,8 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:(Array[Gene],Double)=>Dou
   def P3X(that:Chromosome,  other:Chromosome  )  :  (  Chromosome  ,  Chromosome  )  =  {
     var solution  =  ThreeParent(  this.Genes,  that.Genes,  other.Genes  )
     var Id1  =  (this.ID+that.ID)/2  +  (math floor scala.util.Random.nextDouble()  *100)/10000
-    var fitnessVal1  =  f  (  solution ,0 )
-    val OffSpring:Chromosome = new Chromosome( Id1,  solution,  f  ,  fitnessVal1  )
+    
+    val OffSpring:Chromosome = new Chromosome( Id1,  solution,  f)
     
     //println(OffSpring.toString())
     
@@ -116,10 +112,8 @@ class Chromosome( Id:Double, AlleleVals:Array[Gene], f:(Array[Gene],Double)=>Dou
   
   // Create Chromosome String
   override def toString(): String  =  {
-    ID  +  "   #   "  +fitness  //+  "   ***   "  +  Genes.mkString(" , ")
+    ID  +  " #   "  +fitness  +  " *** "  //+  Genes.mkString(", ")
   }
-  
-  def toDouble(): Array[Double] = Genes.map(_.toDouble())
   
 
 }

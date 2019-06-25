@@ -18,14 +18,12 @@ import scala.util.Random
 import org.apache.spark.storage.StorageLevel
 import scala.util.Random
 
-class GA(  f:  Array[Gene]  =>  Double  , //init:Initializer  ,
+class GA(  f:  (Array[Gene],Double)  =>  Double  , //init:Initializer  ,
     SelectorType:String  ,  MutatorType:String  ,  Replacement:String  ,  crossType:String  ,direction:String  ,
     CrossOverProb:Double  ,  MutationProb:Double  ,
     stopper_Type:String  ,  Stopper_Threshold:Long  ,  PartitionsCount:Int    ,  GenGap:Int,  
     bdCastStrategy:String  ,  bdCastSize:Int  ,  configs:String,  P  :  Int  , CL:  Int  , valBound:  Array[Int],
     sc:SparkContext  ,  chromoRDD:RDD[(Double,Chromosome)]  )   extends  Serializable  {
-  
-
   val  min  =  valBound(0)
   val  max  =  valBound(1)
   
@@ -36,15 +34,16 @@ class GA(  f:  Array[Gene]  =>  Double  , //init:Initializer  ,
       norm  +=  Math.pow  (  Chromo  (  i  )  .  toDouble()  ,  2  )
       }
     norm
-}
+    }
+  
   //Create Spark Configurations
   //val conf = new SparkConf().setAppName("Parallel GA").setMaster("spark://172.18.160.16:3077") 
   //  .setMaster("local[*]")
-// local mode
-//  .setMaster("local[*]")
-//  .set("spark.executor.memory","7g")
-//  .set("spark.driver.memory","3g")
-//  .set("spark.driver.maxResultSize","0")
+  // local mode
+  //  .setMaster("local[*]")
+  //  .set("spark.executor.memory","7g")
+  //  .set("spark.driver.memory","3g")
+  //  .set("spark.driver.maxResultSize","0")
     
   //Create Spark Context
   //val conf = new SparkConf().setAppName("Parallel GA").setMaster("local[*]")
@@ -56,45 +55,45 @@ class GA(  f:  Array[Gene]  =>  Double  , //init:Initializer  ,
   //val a  =  sc.textFile("hdfs://172.18.160.17:54310/FahadMaqbool")
   
   //val accumNFC = sc.longAccumulator("NFC Accumulator")
-//  var _dim  =  CL
-//    var _min  =  min
-//    var _max  =  max
-//    val chromoRDD1 = sc.parallelize(  0 until P, PartitionsCount).mapPartitionsWithIndex { (idx, iter) =>
-//    val random = new Random(  idx  )
-//    println("dim is  "+_dim)
-//    var tempData  =  iter.map(i => Array.fill(3)(  5  )  )
-//    tempData.toIterator
-//    }.persist(StorageLevel.MEMORY_AND_DISK)
+  //  var _dim  =  CL
+  //    var _min  =  min
+  //    var _max  =  max
+  //    val chromoRDD1 = sc.parallelize(  0 until P, PartitionsCount).mapPartitionsWithIndex { (idx, iter) =>
+  //    val random = new Random(  idx  )
+  //    println("dim is  "+_dim)
+  //    var tempData  =  iter.map(i => Array.fill(3)(  5  )  )
+  //    tempData.toIterator
+  //    }.persist(StorageLevel.MEMORY_AND_DISK)
   
     
-//  val chromoRDD = sc.parallelize(  0 until P, PartitionsCount).mapPartitionsWithIndex { (idx, iter) =>
-//      val random = new Random(  idx  )
-//      var _dim  =  CL
-//      var tempData  =  iter.map(i => (i*1.0,Array.fill(_dim)(  (  random.nextDouble()*(max-min)+min  ).asInstanceOf[Gene]  )  )  )
-//      
-//      var Data  =  tempData.map(i => (  (  idx*PartitionsCount+i._1).toDouble  ,  
-//          new Chromosome(  (  idx*PartitionsCount+i._1).toDouble, i._2,  f  ,  f(  i._2  )  )   )  )
-//      //  iter.map(i => (1.0, Vectors.dense(Array.fill(d)(  random.nextDouble()*(max-min)+min  ))))
-//      Data.toIterator
-//    }.persist(StorageLevel.MEMORY_AND_DISK)
+  //  val chromoRDD = sc.parallelize(  0 until P, PartitionsCount).mapPartitionsWithIndex { (idx, iter) =>
+  //      val random = new Random(  idx  )
+  //      var _dim  =  CL
+  //      var tempData  =  iter.map(i => (i*1.0,Array.fill(_dim)(  (  random.nextDouble()*(max-min)+min  ).asInstanceOf[Gene]  )  )  )
+  //      
+  //      var Data  =  tempData.map(i => (  (  idx*PartitionsCount+i._1).toDouble  ,  
+  //          new Chromosome(  (  idx*PartitionsCount+i._1).toDouble, i._2,  f  ,  f(  i._2  )  )   )  )
+  //      //  iter.map(i => (1.0, Vectors.dense(Array.fill(d)(  random.nextDouble()*(max-min)+min  ))))
+  //      Data.toIterator
+  //    }.persist(StorageLevel.MEMORY_AND_DISK)
     
   var  Epsilon  :  Double  =  scala.math.pow  (1e1  ,   -(scala.math.log10(CL)))
   
   //  Parameters PreProcessing to appropriate objects
-//  var chromoList:List[(Double, Chromosome)]=List()
-//   
-//  init.InitType match{
-//      case 1 => {  chromoList  =  init.asInstanceOf[RandomInitializer].chromoList  }  //IntRDDCreation()
-//      case 2 => {  chromoList  =  init.asInstanceOf[RandomDoubleInitializer].chromoList  }  //FileRDDCreation()
-//  }
-  
-//  def L2Norm( Prev  :  Chromosome  ,  Curr  :  Chromosome  )  :  Double  =  {
-//    var  diff  :  Double  =  0.0
-//    for  (  i  <-  0  to  Prev.Genes.length-1  )  {
-//      diff  +=  scala.math.pow  (  (  Prev.Genes(i).toDouble()  -  Curr.Genes(i).toDouble()  )  ,  2  )
-//    }
-//    diff
-//  }
+  //  var chromoList:List[(Double, Chromosome)]=List()
+  //   
+  //  init.InitType match{
+  //      case 1 => {  chromoList  =  init.asInstanceOf[RandomInitializer].chromoList  }  //IntRDDCreation()
+  //      case 2 => {  chromoList  =  init.asInstanceOf[RandomDoubleInitializer].chromoList  }  //FileRDDCreation()
+  //  }
+    
+  //  def L2Norm( Prev  :  Chromosome  ,  Curr  :  Chromosome  )  :  Double  =  {
+  //    var  diff  :  Double  =  0.0
+  //    for  (  i  <-  0  to  Prev.Genes.length-1  )  {
+  //      diff  +=  scala.math.pow  (  (  Prev.Genes(i).toDouble()  -  Curr.Genes(i).toDouble()  )  ,  2  )
+  //    }
+  //    diff
+  //  }
   
     
   val theSelector  =  SelectorType match{
@@ -127,7 +126,7 @@ class GA(  f:  Array[Gene]  =>  Double  , //init:Initializer  ,
   val random = new Random(   )
   for (  count  <- 1 to bdCastSize)  {
     var temp  =  Array.fill(CL)(  new Gene(  random.nextDouble()*(max-min)+min  )  )  
-    initBroad  =  (0.0  ,  new Chromosome  (0.0 ,  temp  ,  f  ,  f(temp)  )  )  ::  initBroad
+    initBroad  =  (0.0  ,  new Chromosome  (0.0 ,  temp  ,  f  ,  f(temp,0)  )  )  ::  initBroad
   }
   //*theSelector.shareBest(chromoRDD.take(  bdCastSize  ) )
   theSelector.shareBest(  initBroad.toArray  )
@@ -137,39 +136,49 @@ class GA(  f:  Array[Gene]  =>  Double  , //init:Initializer  ,
   var PreviousBest  =  BestofBest  //new Chromosome(0.0,Array(new Gene(0)))
   val  theStopper:Stopper  =  new Stopper(stopper_Type,Stopper_Threshold)
   var Threshold:Double  =  1.toDouble  /  CL.toDouble
+
   breakable{
-      while(  !(  theStopper.stop(gens,0)  )  &&  condition  ==  true  )  {
+  
+    while(  !(  theStopper.stop(gens,0)  )  &&  condition  ==  true  )  {
         //*nextPartitions   =  theSelector.selection(Partitioned)
         //*var Results  =  nextPartitions.collect()
-        var nextPartitions   =  theSelector.selection(chromoRDD)
-        var Results  =  nextPartitions.collect()
+      
+        //var nextPartitions   =  theSelector.selection  (  chromoRDD  )
+        var Results   =  theSelector.selection  (  chromoRDD  )
+        //var Results  =  nextPartitions.collect(  )
+        
+        //Results.map(  x  =>  x._2).foreach  (  println  )
         Results  =  Results.sortWith(  _._2.fitness  <  _._2.fitness  )
-        var prRes  =  Results.map(x=>x._2)
-        //prRes  .  foreach  (  println  )
-        var PreviousBest  =  BestofBest
+        //  println(  Results..mkString(  ", "  )  )
+        
+        //  var prRes  =  Results.map(x=>x._2)
+        //  prRes  .  foreach  (  println  )
+        
+        var  PreviousBest  =  BestofBest
         BestofBest  =  Results  (  0  )  .  _2
         optRecord  =  (  gens  ,  0.toLong  ,  BestofBest.fitness  )  ::  optRecord
-        if (BestofBest.fitness  <=  Threshold  ){         
-          theStopper.forceStop()
+        
+        if (  BestofBest.fitness.abs  <=  Threshold  )  {
+          theStopper  .  forceStop  (  )
           gens  +=  gap
           condition  =  false
-          }
-        else if  (    (  L2(PreviousBest)  -  L2(BestofBest)  ).abs  <  Epsilon  ){
-          println("Epsilon is breaking with L2 Prev "+L2(PreviousBest) +" and L2 Curr "+L2(BestofBest))
-          theStopper.forceStop()
-          gens  +=  gap
-          condition  =  false
-        }          
+        }
+//        else if  (    (  L2(PreviousBest)  -  L2(BestofBest)  ).abs  <  Epsilon  ){
+//          println("Epsilon is breaking with L2 Prev "+L2(PreviousBest) +" and L2 Curr "+L2(BestofBest))
+//          theStopper.forceStop()
+//          gens  +=  gap
+//          condition  =  false
+//        }     
         else  {
           gens  +=  gap
+          //println  ("Kiun")
           theSelector.shareBest(Results)
+          //BroadcastWrapper(  sc,  Results  )
         }
-        //println("The Best Solution After Generation "+gens+" is "+BestofBest )
+        println("The Best Solution After Generation "+gens+" is "+BestofBest )
       }
   }
-  
-  
-  
+  gens-=1
   val fOutput   = "\n"+Calendar.getInstance().getTime+"\n"+"Dimensions= "+CL+",	Func= "+TestFunctions.func+",	Population= "+P+",	Partis= "+PartitionsCount+
   ",	bdSize= "+bdCastSize+",	GenGap= "+GenGap+", VTR= "+Threshold+", Gens= "+ gens+", Fitness= "+BestofBest.fitness+",	Time= "+theStopper.timeDiff+",	bdStgy= "+bdCastStrategy+"\n"
   println(fOutput)  
@@ -189,5 +198,4 @@ class GA(  f:  Array[Gene]  =>  Double  , //init:Initializer  ,
     fw2.write(optRecord(u)._1+"	,	"+optRecord(u)._3+"	,	"+optRecord(u)._2)
   fw2.write("			-------------------------------------------			")
   fw2.close()
-  
 }

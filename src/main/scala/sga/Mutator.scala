@@ -1,4 +1,5 @@
-package org.evop.spark.dga
+package sga
+
 
 class Mutator extends Serializable  {
   def mutate(  theChromo:  Chromosome  )  :  Chromosome  =    {
@@ -23,8 +24,7 @@ class InterChanger extends Mutator  {
    MutatedGenes(r1)  =  MutatedGenes(r2)
    MutatedGenes(r2)  =  temp
    //MutatedGenes.foreach(println)
-   var fitnessVal1  =  theChromo.fitnessFunc  (  MutatedGenes  ,  0  )
-   new Chromosome  (  theChromo.ID  ,  MutatedGenes  ,  theChromo.fitnessFunc  ,  fitnessVal1  )
+   new Chromosome  (  theChromo.ID  ,  MutatedGenes  ,  theChromo.fitnessFunc  )
   }
 }
 
@@ -42,7 +42,6 @@ class Reverser extends Mutator  {
    MutatedGenes(r1)  =  MutatedGenes(r2)
    MutatedGenes(r2)  =  temp
    //MutatedGenes.foreach(println)
-   var fitnessVal1  =  theChromo.fitnessFunc  (  MutatedGenes  ,  0  )
-   new Chromosome  (  theChromo.ID  ,  MutatedGenes  ,  theChromo.fitnessFunc  ,  fitnessVal1  )
+   new Chromosome  (  theChromo.ID  ,  MutatedGenes  ,  theChromo.fitnessFunc  )
   }
 }

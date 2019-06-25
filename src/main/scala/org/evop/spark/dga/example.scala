@@ -1,9 +1,15 @@
 package org.evop.spark.dga
 
-object example {
+import org.apache.spark._
+import org.apache.spark.rdd.RDD
+import scala.util.Random
+import org.apache.spark.storage.StorageLevel
+
+object example extends Serializable {
   def main(  args:  Array[String]  )  {
+    
     println("Dimensions ?	:")
-    val  d  =  readInt()
+    var  d  =  readInt()
     println("Population	? :")
     val  p  =  readInt()
     println("Generations	? :")
@@ -26,7 +32,10 @@ object example {
     val  st  =  readLine().toUpperCase()
     println("Number of Partitions ? ")
     val  parti  =  readInt()
-  
+    d  =  d  /  parti
+    val cp  =  50
+    val mp  =  5
+    var configs  =  ""
     
     if(s.toLowerCase()=="r" || s.toLowerCase()=="roulette")  s="ROULETTE"
     if(s.toLowerCase()=="m" || s.toLowerCase()=="random")  s="RANDOM"
@@ -44,18 +53,38 @@ object example {
     if(o.toLowerCase()=="s" || o.toLowerCase()=="sphere")  o="SPHERE"
     if(o.toLowerCase()=="a" || o.toLowerCase()=="ackley")  o="ACKLEY"
     
-    if(o=="SPHERE"){
-    val ri=new RandomDoubleInitializer(p, d,  TestFunctions.SphereBound ,  TestFunctions.SphereFunc  )
+//    if(o=="SPHERE"){
+//    val ri=new RandomDoubleInitializer(p, d,  TestFunctions.SphereBound ,  TestFunctions.SphereFunc  )
+//    
+//    val parGA=new GA(  TestFunctions.SphereFunc,  ri,  s,  m,  r,  c,  "MIN",  30  ,  2  ,  
+//        "MAX_GENS",  g,  parti ,  gp  ,  st  ,  k  ,  "local[*]",  p, d,  TestFunctions.SphereBound  )
+    val conf = new SparkConf().setAppName("Parallel GA").setMaster("local[*]")
+    val sc  =  new SparkContext  (  conf  )
     
-    val parGA=new GA(  TestFunctions.SphereFunc,  ri,  s,  m,  r,  c,  "MIN",  30  ,  2  ,  
-        "MAX_GENS",  g,  parti ,  gp  ,  st  ,  k  ,  "local[*]"  )
-    }
-    else{
-    val ri=new RandomDoubleInitializer(p, d,  TestFunctions.AckleyBound ,  TestFunctions.AckleyFunc  )
-    
-    val parGA=new GA(  TestFunctions.AckleyFunc,  ri,  s,  m,  r,  c,  "MIN",  30  ,  2  ,
-        "MAX_GENS",  g,  parti ,  gp  ,  st  ,  k  ,  "local[*]"  )
-    }
+//    val chromoRDD = sc.parallelize(  0 until p, parti).mapPartitionsWithIndex { (idx, iter) =>
+//        val random = new Random(  idx  )
+//        println("dim is  "+d)
+//        var tempData  =  iter.map(i => Array.fill(d)(  5  )  )
+//        println  (  tempData.mkString(", "))
+//        tempData.toIterator
+//    }.persist(StorageLevel.MEMORY_AND_DISK)
+      var min  =  TestFunctions.SphereBound(0)
+            var max  =  TestFunctions.SphereBound(1)
+            val chromoRDD = sc.parallelize(  0 until p, parti).mapPartitionsWithIndex { (idx, iter) =>
+              val random = new Random(  idx  )
+              var tempData  =  iter.map(i => (i*1.0,Array.fill(d)(  new Gene(  random.nextDouble()*(max-min)+min  )  )  )  )
+              var Data  =  tempData.map(i => (  (  idx*parti+i._1).toDouble  ,  
+              new Chromosome(  (  idx*parti+i._1).toDouble, i._2,  TestFunctions.SphereFunc  ,  TestFunctions.SphereFunc(  i._2 , 0 )  )   )  )
+              Data.toIterator
+              }  .  persist(StorageLevel.MEMORY_AND_DISK)
+            val parGA=new GA(  TestFunctions.SphereFunc,  s,  m,  r,  c,  "MIN",  cp  ,  mp  ,  
+              "MAX_GENS",  g,  parti ,  gp  ,  st  ,  k  ,  configs,  p, d,  TestFunctions.SphereBound,  sc  ,   chromoRDD)
+//    else{
+//    val ri=new RandomDoubleInitializer(p, d,  TestFunctions.AckleyBound ,  TestFunctions.AckleyFunc  )
+//    
+//    val parGA=new GA(  TestFunctions.AckleyFunc,  ri,  s,  m,  r,  c,  "MIN",  30  ,  2  ,
+//        "MAX_GENS",  g,  parti ,  gp  ,  st  ,  k  ,  "local[*]"  )
+//    }
 
     
     

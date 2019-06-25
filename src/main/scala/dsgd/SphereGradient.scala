@@ -67,7 +67,7 @@ class SphereGradient extends Gradient  {
     //println("	DIFF IS	"+diff * diff / 2.0)
     var data1  =  data.toArray.map(x=>x*2)
     var data2  =  Vectors.dense(data1)
-    B.daxpy(data2.size, 1, data2.toDense.values, 1, cumGradient.toDense.values, 1)
+    //B.daxpy(data2.size, 1, data2.toDense.values, 1, cumGradient.toDense.values, 1)
 //    println("cumGradient is ")
 //    println(  cumGradient.toArray.mkString(" ,")  )
 //    println("---------------")
